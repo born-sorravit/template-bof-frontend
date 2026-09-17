@@ -49,12 +49,17 @@ export function RevenueChart({
           tickLine={false}
           axisLine={false}
           tickMargin={8}
+          interval="preserveStartEnd"
+          minTickGap={16}
         />
         <YAxis
           tickLine={false}
           axisLine={false}
-          width={56}
-          tickFormatter={(value: number) => `$${value.toLocaleString("en-US")}`}
+          width={52}
+          tickCount={5}
+          tickFormatter={(value: number) =>
+            value >= 1000 ? `$${Math.round(value / 1000)}k` : `$${value}`
+          }
         />
         <ChartTooltip content={<ChartTooltipContent />} />
         <Area

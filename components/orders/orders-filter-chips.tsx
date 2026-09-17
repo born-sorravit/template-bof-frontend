@@ -6,8 +6,14 @@ import { XIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ORDER_STATUS_META, ORDER_TAB_META } from "@/lib/orders-display"
-import { buildOrdersHref } from "@/lib/orders-query"
+import {
+  DATE_RANGE_META,
+  DELIVERY_STATUS_META,
+  ORDER_STATUS_META,
+  ORDER_TAB_META,
+  PRICE_BAND_META,
+} from "@/lib/orders-display"
+import { buildOrdersHref, CLEARED_FILTERS } from "@/lib/orders-query"
 import type { OrdersQuery } from "@/lib/types/order"
 
 type Chip = { key: string; label: string; href: string }
@@ -27,6 +33,34 @@ function chipsFor(query: OrdersQuery): Chip[] {
       key: "status",
       label: `Status: ${ORDER_STATUS_META[query.status].label}`,
       href: buildOrdersHref(query, { status: null }),
+    })
+  }
+  if (query.delivery) {
+    chips.push({
+      key: "delivery",
+      label: `Delivery: ${DELIVERY_STATUS_META[query.delivery].label}`,
+      href: buildOrdersHref(query, { delivery: null }),
+    })
+  }
+  if (query.range !== "all") {
+    chips.push({
+      key: "range",
+      label: DATE_RANGE_META[query.range].label,
+      href: buildOrdersHref(query, { range: "all" }),
+    })
+  }
+  if (query.city) {
+    chips.push({
+      key: "city",
+      label: `City: ${query.city}`,
+      href: buildOrdersHref(query, { city: null }),
+    })
+  }
+  if (query.price !== "all") {
+    chips.push({
+      key: "price",
+      label: PRICE_BAND_META[query.price].label,
+      href: buildOrdersHref(query, { price: "all" }),
     })
   }
   if (query.tab !== "all") {
@@ -72,7 +106,7 @@ export function OrdersFilterChips({ query }: { query: OrdersQuery }) {
       <Button
         variant="ghost"
         size="xs"
-        render={<Link href={buildOrdersHref(query, { q: "", status: null, tab: "all" })} scroll={false} />}
+        render={<Link href={buildOrdersHref(query, CLEARED_FILTERS)} scroll={false} />}
         nativeButton={false}
       >
         Clear all

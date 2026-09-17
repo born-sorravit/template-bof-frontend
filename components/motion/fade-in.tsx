@@ -25,7 +25,9 @@ export function FadeIn({
   children: React.ReactNode
   className?: string
 }) {
-  return <div className={cn("entrance-rise", className)}>{children}</div>
+  return (
+    <div className={cn("entrance-rise min-w-0", className)}>{children}</div>
+  )
 }
 
 /** Staggers its direct children. Wrap each one in `StaggerItem`. */
@@ -36,7 +38,9 @@ export function Stagger({
   children: React.ReactNode
   className?: string
 }) {
-  return <div className={cn("entrance-stagger", className)}>{children}</div>
+  return (
+    <div className={cn("entrance-stagger min-w-0", className)}>{children}</div>
+  )
 }
 
 export function StaggerItem({
@@ -46,5 +50,5 @@ export function StaggerItem({
   children: React.ReactNode
   className?: string
 }) {
-  return <div className={className}>{children}</div>
+  return <div className={cn("min-w-0", className)}>{children}</div>
 }

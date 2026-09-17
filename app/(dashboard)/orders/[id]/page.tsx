@@ -154,7 +154,7 @@ export default async function OrderDetailPage({
               <Separator />
               <span className="inline-flex items-start gap-2 text-sm text-muted-foreground">
                 <MapPinIcon className="mt-0.5 size-4 shrink-0" />
-                {order.address}
+                {order.address.line1}, {order.address.city}
               </span>
             </CardFooter>
           </Card>

@@ -1,10 +1,12 @@
 import type { badgeVariants } from "@/components/ui/badge"
 import type { VariantProps } from "class-variance-authority"
 import type {
+  DateRangeKey,
   DeliveryStatus,
   OrderSortKey,
   OrderStatus,
   OrderTab,
+  PriceBandKey,
 } from "@/lib/types/order"
 
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>
@@ -62,6 +64,22 @@ export const ORDER_TAB_META: Record<OrderTab, { label: string }> = {
   all: { label: "All orders" },
   pickups: { label: "Pickups" },
   returns: { label: "Returns" },
+}
+
+export const DATE_RANGE_META: Record<DateRangeKey, { label: string }> = {
+  all: { label: "Any date" },
+  "7d": { label: "Last 7 days" },
+  "30d": { label: "Last 30 days" },
+  "90d": { label: "Last 90 days" },
+  "12m": { label: "Last 12 months" },
+}
+
+export const PRICE_BAND_META: Record<PriceBandKey, { label: string }> = {
+  all: { label: "Any price" },
+  "under-100": { label: "Under $100" },
+  "100-500": { label: "$100 - $500" },
+  "500-1000": { label: "$500 - $1,000" },
+  "over-1000": { label: "Over $1,000" },
 }
 
 export const ORDER_SORT_META: Record<OrderSortKey, { label: string }> = {

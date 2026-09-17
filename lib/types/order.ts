@@ -20,6 +20,11 @@ export type OrderChannel = "pickups" | "returns"
 /** The Orders tabs: "all" is the union of both channels. */
 export type OrderTab = "all" | OrderChannel
 
+export type OrderAddress = {
+  line1: string
+  city: string
+}
+
 export type OrderLineItem = {
   name: string
   qty: number
@@ -48,10 +53,16 @@ export type Order = {
   deadline: string
   price: number
   channel: OrderChannel
-  address: string
+  address: OrderAddress
   items: OrderLineItem[]
   timeline: OrderEvent[]
 }
+
+/** Relative windows over `createdAt`. */
+export type DateRangeKey = "all" | "7d" | "30d" | "90d" | "12m"
+
+/** Price bands, in whole dollars. */
+export type PriceBandKey = "all" | "under-100" | "100-500" | "500-1000" | "over-1000"
 
 export type OrderSortKey = "createdAt" | "deadline" | "price"
 export type SortDirection = "asc" | "desc"
@@ -59,7 +70,11 @@ export type SortDirection = "asc" | "desc"
 export type OrdersQuery = {
   q: string
   status: OrderStatus | null
+  delivery: DeliveryStatus | null
   tab: OrderTab
+  range: DateRangeKey
+  city: string | null
+  price: PriceBandKey
   page: number
   perPage: number
   sort: OrderSortKey

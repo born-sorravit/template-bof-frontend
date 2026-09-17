@@ -2,14 +2,18 @@ import {
   BarChart3Icon,
   BellIcon,
   CreditCardIcon,
-  HomeIcon,
+  FileTextIcon,
+  LayoutDashboardIcon,
   LifeBuoyIcon,
   type LucideIcon,
   MessageSquareIcon,
   PackageIcon,
+  ScrollTextIcon,
   SettingsIcon,
+  ShieldCheckIcon,
   ShoppingBagIcon,
   TagIcon,
+  UserCogIcon,
   UsersIcon,
 } from "lucide-react"
 
@@ -17,45 +21,54 @@ export type NavItem = {
   title: string
   href: string
   icon: LucideIcon
-  /** Rendered as a SidebarMenuBadge when present. */
+  /** Rendered as a count badge on the right. */
   badge?: string
+  /** Dimmed, non-navigating, tagged "Soon". */
+  comingSoon?: boolean
 }
 
 export type NavGroup = {
-  /** Used as the SidebarGroupLabel; hidden when the rail is collapsed. */
-  label: string
+  /** Uppercase section heading. Omit for the top-level group. */
+  label?: string
   items: NavItem[]
 }
 
 /** Single source of truth for the sidebar and the breadcrumb labels. */
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Overview",
-    items: [
-      { title: "Home page", href: "/dashboard", icon: HomeIcon },
-      { title: "Analytics", href: "/analytics", icon: BarChart3Icon },
-    ],
-  },
-  {
-    label: "Catalogue",
-    items: [
-      { title: "Products", href: "/products", icon: TagIcon },
-      { title: "Inventory", href: "/inventory", icon: PackageIcon },
-    ],
+    items: [{ title: "Overview", href: "/dashboard", icon: LayoutDashboardIcon }],
   },
   {
     label: "Commerce",
     items: [
       { title: "Orders", href: "/orders", icon: ShoppingBagIcon, badge: "88" },
-      { title: "Customers", href: "/customers", icon: UsersIcon },
+      { title: "Products", href: "/products", icon: TagIcon },
+      { title: "Inventory", href: "/inventory", icon: PackageIcon },
       { title: "Payments", href: "/payments", icon: CreditCardIcon },
+    ],
+  },
+  {
+    label: "Users & access",
+    items: [
+      { title: "Customers", href: "/customers", icon: UsersIcon },
+      { title: "Admins", href: "/admins", icon: UserCogIcon, comingSoon: true },
+      { title: "Consent", href: "/consent", icon: FileTextIcon, comingSoon: true },
+      { title: "Legal documents", href: "/legal", icon: ScrollTextIcon },
+      { title: "Admin roles", href: "/roles", icon: ShieldCheckIcon, comingSoon: true },
+      { title: "Audit log", href: "/audit-log", icon: ScrollTextIcon, comingSoon: true },
+    ],
+  },
+  {
+    label: "Insights",
+    items: [
+      { title: "Analytics", href: "/analytics", icon: BarChart3Icon },
+      { title: "Notifications", href: "/notifications", icon: BellIcon, comingSoon: true },
     ],
   },
   {
     label: "Workspace",
     items: [
       { title: "Messages", href: "/messages", icon: MessageSquareIcon, badge: "3" },
-      { title: "Notifications", href: "/notifications", icon: BellIcon },
       { title: "Settings", href: "/settings", icon: SettingsIcon },
       { title: "Support", href: "/support", icon: LifeBuoyIcon },
     ],
@@ -63,7 +76,7 @@ export const NAV_GROUPS: NavGroup[] = [
 ]
 
 const LABEL_BY_SEGMENT: Record<string, string> = {
-  dashboard: "Dashboard",
+  dashboard: "Overview",
   orders: "Orders",
   products: "Products",
   analytics: "Analytics",
@@ -74,6 +87,11 @@ const LABEL_BY_SEGMENT: Record<string, string> = {
   notifications: "Notifications",
   settings: "Settings",
   support: "Support",
+  legal: "Legal documents",
+  admins: "Admins",
+  consent: "Consent",
+  roles: "Admin roles",
+  "audit-log": "Audit log",
 }
 
 export function labelForSegment(segment: string): string {
@@ -86,10 +104,3 @@ export function labelForSegment(segment: string): string {
 
   return segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
-
-/** The routes that actually exist in this template. */
-export const IMPLEMENTED_ROUTES = new Set([
-  "/dashboard",
-  "/products",
-  "/orders",
-])

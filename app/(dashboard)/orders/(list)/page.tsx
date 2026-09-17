@@ -4,7 +4,8 @@ import { FadeIn } from "@/components/motion/fade-in"
 import { OrdersHeaderActions } from "@/components/orders/orders-header-actions"
 import { OrdersView } from "@/components/orders/orders-view"
 import { PageHeader } from "@/components/shell/page-header"
-import { getOrders } from "@/lib/data/orders"
+import { getOrders, ORDER_CITIES } from "@/lib/data/orders"
+import { SAVED_FILTERS } from "@/lib/data/saved-filters"
 import { parseOrdersQuery } from "@/lib/orders-query"
 
 export const metadata: Metadata = {
@@ -23,7 +24,12 @@ export default async function OrdersPage({
       <FadeIn>
         <PageHeader title="Orders" actions={<OrdersHeaderActions />} />
       </FadeIn>
-      <OrdersView query={query} result={result} />
+      <OrdersView
+        query={query}
+        result={result}
+        cities={ORDER_CITIES}
+        savedFilters={SAVED_FILTERS}
+      />
     </>
   )
 }

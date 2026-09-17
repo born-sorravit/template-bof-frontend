@@ -1,22 +1,20 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   BookmarkIcon,
   CalendarIcon,
   MapPinIcon,
   SearchIcon,
-  SlidersHorizontalIcon,
   Settings2Icon,
+  SlidersHorizontalIcon,
 } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import {
   InputGroup,
   InputGroupAddon,
@@ -24,11 +22,19 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group"
 import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item"
+import {
   Popover,
   PopoverContent,
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Select,
   SelectContent,
@@ -44,43 +50,58 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { ORDER_STATUS_META } from "@/lib/orders-display"
+import {
+  DATE_RANGE_META,
+  DELIVERY_STATUS_META,
+  ORDER_STATUS_META,
+  PRICE_BAND_META,
+} from "@/lib/orders-display"
 import {
   buildOrdersHref,
+  CLEARED_FILTERS,
+  DATE_RANGE_VALUES,
+  DELIVERY_STATUS_VALUES,
   ORDER_STATUS_VALUES,
+  PRICE_BAND_VALUES,
 } from "@/lib/orders-query"
-import type { OrderStatus, OrdersQuery } from "@/lib/types/order"
+import type { SavedFilter } from "@/lib/data/saved-filters"
+import type {
+  DateRangeKey,
+  DeliveryStatus,
+  OrderStatus,
+  OrdersQuery,
+  PriceBandKey,
+} from "@/lib/types/order"
 
-type StatusItem = { label: string; value: OrderStatus | null }
-
-const STATUS_ITEMS: StatusItem[] = [
-  { label: "All statuses", value: null },
-  ...ORDER_STATUS_VALUES.map((value) => ({
-    label: ORDER_STATUS_META[value].label,
-    value: value as OrderStatus | null,
-  })),
-]
-
-function StatusSelect({ query }: { query: OrdersQuery }) {
-  const router = useRouter()
-
+/**
+ * A URL-driven Select. Base UI needs `items` on the root, and the "any" choice
+ * is an item with `value: null` rather than a placeholder string.
+ */
+function FilterSelect<T extends string>({
+  label,
+  value,
+  items,
+  onPick,
+  className,
+}: {
+  label: string
+  value: T | null
+  items: Array<{ label: string; value: T | null }>
+  onPick: (value: T | null) => void
+  className?: string
+}) {
   return (
     <Select
-      items={STATUS_ITEMS}
-      value={query.status}
-      onValueChange={(value) =>
-        router.push(
-          buildOrdersHref(query, { status: value as OrderStatus | null }),
-          { scroll: false }
-        )
-      }
+      items={items}
+      value={value}
+      onValueChange={(next) => onPick(next as T | null)}
     >
-      <SelectTrigger className="w-full md:w-auto" aria-label="Filter by status">
+      <SelectTrigger className={className} aria-label={label}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false} align="start">
         <SelectGroup>
-          {STATUS_ITEMS.map((item) => (
+          {items.map((item) => (
             <SelectItem key={item.label} value={item.value}>
               {item.label}
             </SelectItem>
@@ -91,72 +112,244 @@ function StatusSelect({ query }: { query: OrdersQuery }) {
   )
 }
 
-/**
- * The template's date-range, address and saved-filter controls are visual
- * scaffolding: they demonstrate the composition but do not narrow the mock
- * data. Only search, status and the tabs are wired to the URL.
- */
-function ScaffoldPopover({
-  icon: Icon,
-  label,
-  title,
-  description,
+const STATUS_ITEMS: Array<{ label: string; value: OrderStatus | null }> = [
+  { label: "All statuses", value: null },
+  ...ORDER_STATUS_VALUES.map((value) => ({
+    label: ORDER_STATUS_META[value].label,
+    value: value as OrderStatus | null,
+  })),
+]
+
+const DELIVERY_ITEMS: Array<{ label: string; value: DeliveryStatus | null }> = [
+  { label: "Any delivery status", value: null },
+  ...DELIVERY_STATUS_VALUES.map((value) => ({
+    label: DELIVERY_STATUS_META[value].label,
+    value: value as DeliveryStatus | null,
+  })),
+]
+
+const RANGE_ITEMS = DATE_RANGE_VALUES.map((value) => ({
+  label: DATE_RANGE_META[value].label,
+  value: value as DateRangeKey | null,
+}))
+
+const PRICE_ITEMS = PRICE_BAND_VALUES.map((value) => ({
+  label: PRICE_BAND_META[value].label,
+  value: value as PriceBandKey | null,
+}))
+
+function DateRangeFilter({
+  query,
+  push,
 }: {
-  icon: React.ComponentType
-  label: string
-  title: string
-  description: string
+  query: OrdersQuery
+  push: (patch: Partial<OrdersQuery>) => void
 }) {
   return (
     <Popover>
       <PopoverTrigger
         render={<Button variant="outline" className="w-full md:w-auto" />}
       >
-        <Icon data-icon="inline-start" />
-        {label}
+        <CalendarIcon data-icon="inline-start" />
+        {query.range === "all"
+          ? "Date range"
+          : DATE_RANGE_META[query.range].label}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-72">
-        <PopoverTitle>{title}</PopoverTitle>
-        <p className="text-sm text-muted-foreground">{description}</p>
+      <PopoverContent align="start" className="w-56">
+        <PopoverTitle>Created date</PopoverTitle>
+        <FieldGroup className="pt-2">
+          <Field>
+            <FieldLabel className="sr-only">Date range</FieldLabel>
+            <FilterSelect
+              label="Filter by created date"
+              className="w-full"
+              value={query.range}
+              items={RANGE_ITEMS}
+              onPick={(range) => push({ range: range ?? "all" })}
+            />
+          </Field>
+        </FieldGroup>
       </PopoverContent>
     </Popover>
   )
 }
 
-function FilterControls({ query }: { query: OrdersQuery }) {
+function AddressFilter({
+  query,
+  cities,
+  push,
+}: {
+  query: OrdersQuery
+  cities: string[]
+  push: (patch: Partial<OrdersQuery>) => void
+}) {
+  const items = React.useMemo(
+    () => [
+      { label: "Any address", value: null },
+      ...cities.map((city) => ({ label: city, value: city as string | null })),
+    ],
+    [cities]
+  )
+
   return (
-    <>
-      <ScaffoldPopover
-        icon={CalendarIcon}
-        label="Date range"
-        title="Date range"
-        description="Wire this to your date picker of choice — the URL already carries every other filter."
-      />
-      <StatusSelect query={query} />
-      <ScaffoldPopover
-        icon={MapPinIcon}
-        label="Address"
-        title="Address"
-        description="Filter by delivery region once your API exposes it."
-      />
-      <ScaffoldPopover
-        icon={BookmarkIcon}
-        label="Saved filters (15)"
-        title="Saved filters"
-        description="Persist a named set of search params per user."
-      />
-      <ScaffoldPopover
-        icon={Settings2Icon}
-        label="More filters"
-        title="More filters"
-        description="Delivery status, price band, channel — add them to parseOrdersQuery."
-      />
-    </>
+    <Popover>
+      <PopoverTrigger
+        render={<Button variant="outline" className="w-full md:w-auto" />}
+      >
+        <MapPinIcon data-icon="inline-start" />
+        {query.city ?? "Address"}
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56">
+        <PopoverTitle>Delivery city</PopoverTitle>
+        <FieldGroup className="pt-2">
+          <Field>
+            <FieldLabel className="sr-only">City</FieldLabel>
+            <FilterSelect
+              label="Filter by city"
+              className="w-full"
+              value={query.city}
+              items={items}
+              onPick={(city) => push({ city })}
+            />
+          </Field>
+        </FieldGroup>
+      </PopoverContent>
+    </Popover>
   )
 }
 
-export function OrdersToolbar({ query }: { query: OrdersQuery }) {
+function SavedFiltersPopover({
+  query,
+  savedFilters,
+}: {
+  query: OrdersQuery
+  savedFilters: SavedFilter[]
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={<Button variant="outline" className="w-full md:w-auto" />}
+      >
+        <BookmarkIcon data-icon="inline-start" />
+        Saved filters ({savedFilters.length})
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-80 p-0">
+        <div className="p-3 pb-1">
+          <PopoverTitle>Saved filters</PopoverTitle>
+        </div>
+        <ScrollArea className="h-72">
+          <ItemGroup className="p-1">
+            {savedFilters.map((saved) => (
+              <Item
+                key={saved.id}
+                render={
+                  <Link
+                    href={buildOrdersHref(query, {
+                      ...CLEARED_FILTERS,
+                      ...saved.patch,
+                    })}
+                    scroll={false}
+                  />
+                }
+              >
+                <ItemContent>
+                  <ItemTitle>{saved.name}</ItemTitle>
+                  <ItemDescription>{saved.description}</ItemDescription>
+                </ItemContent>
+              </Item>
+            ))}
+          </ItemGroup>
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function MoreFiltersPopover({
+  query,
+  push,
+}: {
+  query: OrdersQuery
+  push: (patch: Partial<OrdersQuery>) => void
+}) {
+  const extraCount =
+    (query.delivery !== null ? 1 : 0) + (query.price !== "all" ? 1 : 0)
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={<Button variant="outline" className="w-full md:w-auto" />}
+      >
+        <Settings2Icon data-icon="inline-start" />
+        More filters
+        {extraCount > 0 ? (
+          <Badge variant="secondary" data-icon="inline-end">
+            {extraCount}
+          </Badge>
+        ) : null}
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64">
+        <PopoverTitle>More filters</PopoverTitle>
+        <FieldGroup className="pt-2">
+          <Field>
+            <FieldLabel>Delivery status</FieldLabel>
+            <FilterSelect
+              label="Filter by delivery status"
+              className="w-full"
+              value={query.delivery}
+              items={DELIVERY_ITEMS}
+              onPick={(delivery) => push({ delivery })}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Price</FieldLabel>
+            <FilterSelect
+              label="Filter by price"
+              className="w-full"
+              value={query.price}
+              items={PRICE_ITEMS}
+              onPick={(price) => push({ price: price ?? "all" })}
+            />
+          </Field>
+        </FieldGroup>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+export function OrdersToolbar({
+  query,
+  cities,
+  savedFilters,
+}: {
+  query: OrdersQuery
+  cities: string[]
+  savedFilters: SavedFilter[]
+}) {
   const router = useRouter()
+
+  const push = React.useCallback(
+    (patch: Partial<OrdersQuery>) => {
+      router.push(buildOrdersHref(query, patch), { scroll: false })
+    },
+    [query, router]
+  )
+
+  const controls = (
+    <>
+      <DateRangeFilter query={query} push={push} />
+      <FilterSelect
+        label="Filter by status"
+        className="w-full md:w-auto"
+        value={query.status}
+        items={STATUS_ITEMS}
+        onPick={(status) => push({ status })}
+      />
+      <AddressFilter query={query} cities={cities} push={push} />
+      <SavedFiltersPopover query={query} savedFilters={savedFilters} />
+      <MoreFiltersPopover query={query} push={push} />
+    </>
+  )
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl bg-muted/50 p-3 md:flex-row md:items-center md:justify-between">
@@ -165,10 +358,7 @@ export function OrdersToolbar({ query }: { query: OrdersQuery }) {
         onSubmit={(event) => {
           event.preventDefault()
           const value = new FormData(event.currentTarget).get("q")
-          router.push(
-            buildOrdersHref(query, { q: String(value ?? "").trim() }),
-            { scroll: false }
-          )
+          push({ q: String(value ?? "").trim() })
         }}
       >
         <InputGroup>
@@ -195,7 +385,7 @@ export function OrdersToolbar({ query }: { query: OrdersQuery }) {
 
       {/* Desktop: the filters sit inline. */}
       <div className="hidden flex-wrap items-center gap-2 md:flex">
-        <FilterControls query={query} />
+        {controls}
       </div>
 
       {/* Mobile: five pills wrap badly, so they move into a sheet. */}
@@ -208,14 +398,7 @@ export function OrdersToolbar({ query }: { query: OrdersQuery }) {
           <SheetHeader>
             <SheetTitle>Filter orders</SheetTitle>
           </SheetHeader>
-          <FieldGroup className="p-4">
-            <Field>
-              <FieldLabel>Filters</FieldLabel>
-              <div className="flex flex-col gap-2">
-                <FilterControls query={query} />
-              </div>
-            </Field>
-          </FieldGroup>
+          <div className="flex flex-col gap-2 p-4">{controls}</div>
         </SheetContent>
       </Sheet>
     </div>

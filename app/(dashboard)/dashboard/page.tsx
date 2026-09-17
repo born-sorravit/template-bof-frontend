@@ -1,6 +1,17 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowRightIcon, TrendingDownIcon, TrendingUpIcon } from "lucide-react"
+import {
+  ArrowRightIcon,
+  BoxesIcon,
+  ChartColumnIcon,
+  CreditCardIcon,
+  LayersIcon,
+  ReceiptTextIcon,
+  TrendingDownIcon,
+  TrendingUpIcon,
+  TrophyIcon,
+  TruckIcon,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,6 +24,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
 import {
   Table,
   TableBody,
@@ -21,19 +34,39 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { CountUp } from "@/components/motion/count-up"
 import { FadeIn, Stagger, StaggerItem } from "@/components/motion/fade-in"
+import { CardHead } from "@/components/dashboard/card-head"
+import { DonutCard } from "@/components/dashboard/donut-card"
+import { OrdersBarChart } from "@/components/dashboard/orders-bar-chart"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { OrderStatusBadge } from "@/components/orders/order-status-badge"
 import { PageHeader } from "@/components/shell/page-header"
 import { getDashboardStats } from "@/lib/data/orders"
-import { formatDate, formatPrice } from "@/lib/orders-display"
+import { ORDER_STATUS_META, formatDate, formatPrice } from "@/lib/orders-display"
 
 export const metadata: Metadata = {
   title: "Dashboard",
 }
 
+/** Every card fills its grid row, so no row leaves a void under a short card. */
+const CARD = "h-full"
+
 export default async function DashboardPage() {
-  const { tiles, revenueSeries, recentOrders } = await getDashboardStats()
+  const {
+    tiles,
+    revenueSeries,
+    ordersByMonth,
+    recentOrders,
+    statusBreakdown,
+    channelSplit,
+    paymentSplit,
+    topProducts,
+    fulfilment,
+  } = await getDashboardStats()
+
+  const totalOrders = channelSplit.reduce((sum, s) => sum + s.value, 0)
+  const maxStatus = Math.max(...statusBreakdown.map((r) => r.count), 1)
 
   return (
     <>
@@ -42,10 +75,7 @@ export default async function DashboardPage() {
           title="Dashboard"
           description="Everything on this page reads from the mock dataset in lib/data/orders.ts."
           actions={
-            <Button
-              render={<Link href="/orders" />}
-              nativeButton={false}
-            >
+            <Button render={<Link href="/orders" />} nativeButton={false}>
               View orders
               <ArrowRightIcon data-icon="inline-end" />
             </Button>
@@ -53,27 +83,56 @@ export default async function DashboardPage() {
         />
       </FadeIn>
 
+      {/* Row 1 — headline numbers. The first tile carries the brand accent. */}
       <Stagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {tiles.map((tile) => {
+        {tiles.map((tile, index) => {
           const up = tile.deltaPct >= 0
+          const featured = index === 0
+
           return (
             <StaggerItem key={tile.key}>
-              <Card>
+              <Card
+                className={
+                  featured
+                    ? `${CARD} border-transparent bg-linear-to-br from-chart-1 to-chart-1/70 text-primary-foreground`
+                    : CARD
+                }
+              >
                 <CardHeader>
-                  <CardDescription>{tile.label}</CardDescription>
+                  <CardDescription
+                    className={featured ? "text-primary-foreground/80" : undefined}
+                  >
+                    {tile.label}
+                  </CardDescription>
                   <CardTitle className="text-2xl tabular-nums">
-                    {tile.value}
+                    <CountUp value={tile.value} format={tile.format} />
                   </CardTitle>
                   <CardAction>
-                    <Badge variant={up ? "success" : "danger"}>
+                    <Badge
+                      variant={
+                        featured ? "outline" : up ? "success" : "danger"
+                      }
+                      className={
+                        featured
+                          ? "border-primary-foreground/30 text-primary-foreground"
+                          : undefined
+                      }
+                    >
                       {up ? <TrendingUpIcon /> : <TrendingDownIcon />}
-                      {up ? "+" : ""}
-                      {tile.deltaPct}%
+                      <CountUp value={tile.deltaPct} format="delta" duration={0.9} />
                     </Badge>
                   </CardAction>
                 </CardHeader>
-                <CardFooter>
-                  <span className="text-xs text-muted-foreground">
+                <CardFooter
+                  className={featured ? "bg-transparent border-t-0" : undefined}
+                >
+                  <span
+                    className={
+                      featured
+                        ? "text-xs text-primary-foreground/75"
+                        : "text-xs text-muted-foreground"
+                    }
+                  >
                     Compared with the previous period
                   </span>
                 </CardFooter>
@@ -83,15 +142,15 @@ export default async function DashboardPage() {
         })}
       </Stagger>
 
+      {/* Row 2 — revenue trend beside the channel split. */}
       <Stagger className="grid gap-4 lg:grid-cols-3">
         <StaggerItem className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue by month</CardTitle>
-              <CardDescription>
-                Summed from every order created in 2021
-              </CardDescription>
-            </CardHeader>
+          <Card className={CARD}>
+            <CardHead
+              icon={ChartColumnIcon}
+              title="Revenue by month"
+              description="Summed by month across the last 12 months"
+            />
             <CardContent>
               <RevenueChart data={revenueSeries} />
             </CardContent>
@@ -99,16 +158,112 @@ export default async function DashboardPage() {
         </StaggerItem>
 
         <StaggerItem>
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent orders</CardTitle>
-              <CardDescription>The six most recently created</CardDescription>
-            </CardHeader>
+          <Card className={CARD}>
+            <CardHead
+              icon={BoxesIcon}
+              title="Orders by channel"
+              description="Pickups against returns"
+            />
+            <CardContent>
+              <DonutCard
+                slices={channelSplit}
+                total={totalOrders}
+                unit="orders"
+              />
+            </CardContent>
+          </Card>
+        </StaggerItem>
+      </Stagger>
+
+      {/* Row 3 — three equal cards. */}
+      <Stagger className="grid gap-4 lg:grid-cols-3">
+        <StaggerItem>
+          <Card className={CARD}>
+            <CardHead
+              icon={ReceiptTextIcon}
+              title="Orders per month"
+              description="Volume over the last 12 months"
+            />
+            <CardContent>
+              <OrdersBarChart data={ordersByMonth} />
+            </CardContent>
+          </Card>
+        </StaggerItem>
+
+        <StaggerItem>
+          <Card className={CARD}>
+            <CardHead
+              icon={CreditCardIcon}
+              title="Payment state"
+              description="Where the money currently sits"
+            />
+            <CardContent>
+              <DonutCard
+                slices={paymentSplit}
+                total={totalOrders}
+                unit="orders"
+              />
+            </CardContent>
+          </Card>
+        </StaggerItem>
+
+        <StaggerItem>
+          <Card className={CARD}>
+            <CardHead
+              icon={TruckIcon}
+              title="Fulfilment"
+              description="What the warehouse owes today"
+            />
+            <CardContent className="flex flex-1 flex-col">
+              <div className="grid flex-1 grid-cols-2 grid-rows-2 gap-3">
+                {fulfilment.map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex flex-col gap-1 rounded-xl bg-muted/50 p-3"
+                  >
+                    <CountUp
+                      value={item.value}
+                      className="text-2xl font-semibold tabular-nums"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </StaggerItem>
+      </Stagger>
+
+      {/* Row 4 — the recent table beside the product ranking. */}
+      <Stagger className="grid gap-4 lg:grid-cols-3">
+        <StaggerItem className="lg:col-span-2">
+          <Card className={CARD}>
+            <CardHead
+              icon={LayersIcon}
+              title="Recent orders"
+              description="The six most recently created"
+              action={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  render={<Link href="/orders" />}
+                  nativeButton={false}
+                >
+                  All orders
+                  <ArrowRightIcon data-icon="inline-end" />
+                </Button>
+              }
+            />
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Order</TableHead>
+                    <TableHead className="hidden sm:table-cell">
+                      Customer
+                    </TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Price</TableHead>
                   </TableRow>
@@ -116,7 +271,7 @@ export default async function DashboardPage() {
                 <TableBody>
                   {recentOrders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="max-w-32">
+                      <TableCell className="max-w-44">
                         <Link
                           href={`/orders/${order.id}`}
                           className="block truncate font-medium hover:underline"
@@ -126,6 +281,9 @@ export default async function DashboardPage() {
                         <span className="text-xs text-muted-foreground">
                           {formatDate(order.createdAt)}
                         </span>
+                      </TableCell>
+                      <TableCell className="hidden text-muted-foreground sm:table-cell">
+                        {order.customer.name}
                       </TableCell>
                       <TableCell>
                         <OrderStatusBadge status={order.status} />
@@ -138,19 +296,86 @@ export default async function DashboardPage() {
                 </TableBody>
               </Table>
             </CardContent>
-            <CardFooter>
-              <Button
-                variant="outline"
-                className="w-full"
-                render={<Link href="/orders" />}
-                nativeButton={false}
-              >
-                All orders
-              </Button>
-            </CardFooter>
+          </Card>
+        </StaggerItem>
+
+        <StaggerItem>
+          <Card className={CARD}>
+            <CardHead
+              icon={TrophyIcon}
+              title="Top products"
+              description="By revenue across all orders"
+            />
+            <CardContent className="flex flex-1 flex-col">
+              <ol className="flex flex-1 flex-col justify-between gap-3">
+                {topProducts.map((product) => (
+                  <li key={product.name} className="flex items-center gap-3">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-medium tabular-nums">
+                      {product.rank}
+                    </span>
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm font-medium">
+                        {product.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {product.orders} orders
+                      </span>
+                    </span>
+                    <CountUp
+                      value={product.revenue}
+                      format="currency"
+                      className="ml-auto text-sm font-medium tabular-nums"
+                    />
+                  </li>
+                ))}
+              </ol>
+            </CardContent>
           </Card>
         </StaggerItem>
       </Stagger>
+
+      {/* Row 5 — the full status distribution. Seven categories, so bars. */}
+      <FadeIn>
+        <Card>
+          <CardHead
+            icon={ChartColumnIcon}
+            title="Breakdown by status"
+            description={`All ${totalOrders} orders, grouped by where they currently sit`}
+          />
+          <CardContent>
+            <Separator className="mb-4" />
+            <ul className="grid gap-4 md:grid-cols-2">
+              {statusBreakdown.map((row) => {
+                const meta = ORDER_STATUS_META[row.status]
+                return (
+                  <li key={row.status} className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={meta.variant}>{meta.label}</Badge>
+                        <span className="text-sm text-muted-foreground">
+                          <CountUp value={row.share} format="percent" /> of orders
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-3">
+                        <CountUp
+                          value={row.value}
+                          format="currency"
+                          className="text-sm text-muted-foreground tabular-nums"
+                        />
+                        <CountUp
+                          value={row.count}
+                          className="text-lg font-semibold tabular-nums"
+                        />
+                      </div>
+                    </div>
+                    <Progress value={(row.count / maxStatus) * 100} />
+                  </li>
+                )
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      </FadeIn>
     </>
   )
 }

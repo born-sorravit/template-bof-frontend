@@ -21,7 +21,8 @@ import { OrdersResultsBar } from "@/components/orders/orders-results-bar"
 import { OrdersTable } from "@/components/orders/orders-table"
 import { OrdersTabs } from "@/components/orders/orders-tabs"
 import { OrdersToolbar } from "@/components/orders/orders-toolbar"
-import { buildOrdersHref, hasActiveFilters } from "@/lib/orders-query"
+import { buildOrdersHref, CLEARED_FILTERS, hasActiveFilters } from "@/lib/orders-query"
+import type { SavedFilter } from "@/lib/data/saved-filters"
 import type { OrdersQuery, OrdersResult } from "@/lib/types/order"
 
 /**
@@ -32,9 +33,13 @@ import type { OrdersQuery, OrdersResult } from "@/lib/types/order"
 export function OrdersView({
   query,
   result,
+  cities,
+  savedFilters,
 }: {
   query: OrdersQuery
   result: OrdersResult
+  cities: string[]
+  savedFilters: SavedFilter[]
 }) {
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set())
 
@@ -69,7 +74,11 @@ export function OrdersView({
     <>
       <Stagger className="flex flex-col gap-4">
         <StaggerItem>
-          <OrdersToolbar query={query} />
+          <OrdersToolbar
+            query={query}
+            cities={cities}
+            savedFilters={savedFilters}
+          />
         </StaggerItem>
 
         {hasActiveFilters(query) ? (
@@ -100,11 +109,7 @@ export function OrdersView({
                   variant="outline"
                   render={
                     <Link
-                      href={buildOrdersHref(query, {
-                        q: "",
-                        status: null,
-                        tab: "all",
-                      })}
+                      href={buildOrdersHref(query, CLEARED_FILTERS)}
                       scroll={false}
                     />
                   }
