@@ -23,6 +23,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-info: var(--status-info);
+  --color-status-danger: var(--status-danger);
+  --color-status-neutral: var(--status-neutral);
+  --color-status-transit: var(--status-transit);
+  --color-status-settled: var(--status-settled);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -67,12 +74,19 @@
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.705 0.015 286.067);
-  --chart-1: oklch(0.871 0.006 286.286);
-  --chart-2: oklch(0.552 0.016 285.938);
+  --chart-1: oklch(0.274 0.006 286.033);
+  --chart-2: oklch(0.37 0.013 285.805);
   --chart-3: oklch(0.442 0.017 285.786);
-  --chart-4: oklch(0.37 0.013 285.805);
-  --chart-5: oklch(0.274 0.006 286.033);
+  --chart-4: oklch(0.552 0.016 285.938);
+  --chart-5: oklch(0.705 0.015 286.067);
   --radius: 0.625rem;
+  --status-success: oklch(0.55 0.14 155);
+  --status-warning: oklch(0.62 0.15 70);
+  --status-info: oklch(0.55 0.2 260);
+  --status-danger: oklch(0.58 0.22 25);
+  --status-neutral: oklch(0.55 0.02 286);
+  --status-transit: oklch(0.55 0.2 300);
+  --status-settled: oklch(0.6 0.2 350);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: oklch(0.21 0.006 285.885);
@@ -103,18 +117,71 @@
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.552 0.016 285.938);
   --chart-1: oklch(0.871 0.006 286.286);
-  --chart-2: oklch(0.552 0.016 285.938);
-  --chart-3: oklch(0.442 0.017 285.786);
-  --chart-4: oklch(0.37 0.013 285.805);
-  --chart-5: oklch(0.274 0.006 286.033);
+  --chart-2: oklch(0.705 0.015 286.067);
+  --chart-3: oklch(0.552 0.016 285.938);
+  --chart-4: oklch(0.442 0.017 285.786);
+  --chart-5: oklch(0.37 0.013 285.805);
+  --status-success: oklch(0.72 0.15 155);
+  --status-warning: oklch(0.78 0.15 70);
+  --status-info: oklch(0.7 0.17 260);
+  --status-danger: oklch(0.7 0.19 25);
+  --status-neutral: oklch(0.7 0.02 286);
+  --status-transit: oklch(0.7 0.17 300);
+  --status-settled: oklch(0.74 0.17 350);
   --sidebar: oklch(0.21 0.006 285.885);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.92 0.004 286.32);
+  --sidebar-primary-foreground: oklch(0.21 0.006 285.885);
   --sidebar-accent: oklch(0.274 0.006 286.033);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+}
+
+/*
+ * Entrance animations.
+ *
+ * These are CSS, not motion.dev, on purpose: a JS-driven entrance has to
+ * server-render its elements at `opacity: 0` and only reveal them once
+ * hydration runs, which ships invisible content to anyone whose JS is slow,
+ * blocked or broken. A CSS keyframe is additive — the element's resting state
+ * is visible, so the worst case is "no animation", never "no content".
+ *
+ * motion.dev is still used for the interaction-driven animations (filter chips,
+ * the bulk-action bar), where JS is running by definition.
+ */
+@keyframes entrance-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@layer components {
+  .entrance-rise {
+    animation: entrance-rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Staggers direct children. Past the 8th child the delay holds steady so a
+     long list never waits seconds for its tail. */
+  .entrance-stagger > * {
+    animation: entrance-rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .entrance-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .entrance-stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .entrance-stagger > *:nth-child(3) { animation-delay: 120ms; }
+  .entrance-stagger > *:nth-child(4) { animation-delay: 180ms; }
+  .entrance-stagger > *:nth-child(5) { animation-delay: 240ms; }
+  .entrance-stagger > *:nth-child(6) { animation-delay: 300ms; }
+  .entrance-stagger > *:nth-child(7) { animation-delay: 360ms; }
+  .entrance-stagger > *:nth-child(n + 8) { animation-delay: 420ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .entrance-rise,
+    .entrance-stagger > * {
+      animation: none;
+    }
+  }
 }
 
 @layer base {
