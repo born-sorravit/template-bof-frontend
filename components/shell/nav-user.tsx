@@ -24,17 +24,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { toast } from "@/components/ui/toast"
+import { useI18n } from "@/components/i18n/locale-provider"
+import { signOut } from "@/lib/auth/actions"
+import { ROLE_LABELS, type DemoUser } from "@/lib/auth/users"
 
-const USER = {
-  name: "Amara Nwosu",
-  role: "Operations lead",
-  email: "amara@northwind.example",
-  initials: "AN",
-}
-
-export function NavUser() {
+export function NavUser({ user }: { user: DemoUser }) {
   const { isMobile } = useSidebar()
+  const { locale, dict } = useI18n()
+  const role = ROLE_LABELS[user.role][locale]
 
   return (
     <SidebarMenu className="group-data-[collapsible=icon]:items-center">
@@ -46,18 +43,18 @@ export function NavUser() {
               wrapper is discarded, so it would be a no-op. `aria-label` covers
               the collapsed rail, where the name is visually hidden. */}
           <DropdownMenuTrigger
-            aria-label={USER.name}
+            aria-label={user.name}
             render={<SidebarMenuButton size="lg" />}
           >
             <Avatar className="size-8 rounded-lg">
               <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {USER.initials}
+                {user.initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-col gap-0.5 text-left leading-tight group-data-[collapsible=icon]:hidden">
-              <span className="truncate text-sm font-medium">{USER.name}</span>
+              <span className="truncate text-sm font-medium">{user.name}</span>
               <span className="truncate text-xs text-sidebar-foreground/60">
-                {USER.role}
+                {role}
               </span>
             </div>
             <ChevronsUpDownIcon
@@ -75,9 +72,9 @@ export function NavUser() {
                 "MenuGroupContext is missing" at runtime, not at build time. */}
             <DropdownMenuGroup>
               <DropdownMenuLabel className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">{USER.name}</span>
+                <span className="text-sm font-medium">{user.name}</span>
                 <span className="text-xs font-normal text-muted-foreground">
-                  {USER.email}
+                  {user.email}
                 </span>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
@@ -85,26 +82,25 @@ export function NavUser() {
             <DropdownMenuGroup>
               <DropdownMenuItem render={<Link href="/settings" />}>
                 <UserIcon />
-                Account
+                {dict.common.account}
               </DropdownMenuItem>
               <DropdownMenuItem render={<Link href="/settings" />}>
                 <SettingsIcon />
-                Preferences
+                {dict.common.preferences}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              {/* A real Server Action: clears the session cookie and
+                  redirects, so it exercises the same path a real app would. */}
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() =>
-                  toast.add({
-                    title: "Signed out",
-                    description: "Mock only — no session to end.",
-                  })
-                }
+                onClick={() => {
+                  void signOut()
+                }}
               >
                 <LogOutIcon />
-                Sign out
+                {dict.common.signOut}
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>

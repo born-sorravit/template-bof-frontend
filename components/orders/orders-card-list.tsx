@@ -15,6 +15,7 @@ import { DeliveryStatus } from "@/components/orders/delivery-status"
 import { OrderStatusBadge } from "@/components/orders/order-status-badge"
 import { OrdersRowActions } from "@/components/orders/orders-row-actions"
 import { formatDate, formatPrice } from "@/lib/orders-display"
+import { useI18n } from "@/components/i18n/locale-provider"
 import type { Order } from "@/lib/types/order"
 
 /**
@@ -31,6 +32,9 @@ export function OrdersCardList({
   selectedIds: Set<string>
   onToggleRow: (id: string, checked: boolean) => void
 }) {
+  const { dict } = useI18n()
+  const c = dict.pages.orders.columns
+
   return (
     <div className="flex flex-col gap-3 md:hidden">
       {rows.map((order) => {
@@ -47,7 +51,7 @@ export function OrdersCardList({
               </CardDescription>
               <CardAction>
                 <Checkbox
-                  aria-label={`Select order ${order.id}`}
+                  aria-label={order.id}
                   checked={selected}
                   onCheckedChange={(checked) =>
                     onToggleRow(order.id, Boolean(checked))
@@ -64,22 +68,22 @@ export function OrdersCardList({
               <Separator />
               <dl className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex flex-col">
-                  <dt className="text-xs text-muted-foreground">Created</dt>
+                  <dt className="text-xs text-muted-foreground">{c.created}</dt>
                   <dd>{formatDate(order.createdAt)}</dd>
                 </div>
                 <div className="flex flex-col">
-                  <dt className="text-xs text-muted-foreground">Deadline</dt>
+                  <dt className="text-xs text-muted-foreground">{c.deadline}</dt>
                   <dd>{formatDate(order.deadline)}</dd>
                 </div>
                 <div className="flex flex-col">
-                  <dt className="text-xs text-muted-foreground">Price</dt>
+                  <dt className="text-xs text-muted-foreground">{c.price}</dt>
                   <dd className="font-medium tabular-nums">
                     {formatPrice(order.price)}
                   </dd>
                 </div>
                 <div className="flex flex-col">
-                  <dt className="text-xs text-muted-foreground">Channel</dt>
-                  <dd className="capitalize">{order.channel}</dd>
+                  <dt className="text-xs text-muted-foreground">{c.channel}</dt>
+                  <dd>{dict.orderChannel[order.channel]}</dd>
                 </div>
               </dl>
             </CardContent>

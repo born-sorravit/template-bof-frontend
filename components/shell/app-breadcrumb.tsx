@@ -21,25 +21,30 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { labelForSegment } from "@/components/shell/nav-items"
+import { useI18n } from "@/components/i18n/locale-provider"
+import type { Dictionary } from "@/lib/i18n/dictionaries/en"
 
 type Crumb = { label: string; href: string }
 
-function crumbsFor(pathname: string): Crumb[] {
+function crumbsFor(pathname: string, dict: Dictionary): Crumb[] {
   const segments = pathname.split("/").filter(Boolean)
 
-  const crumbs: Crumb[] = [{ label: "Home page", href: "/dashboard" }]
+  const crumbs: Crumb[] = [
+    { label: dict.common.homePage, href: "/dashboard" },
+  ]
   let href = ""
   for (const segment of segments) {
     href += `/${segment}`
     if (href === "/dashboard") continue
-    crumbs.push({ label: labelForSegment(segment), href })
+    crumbs.push({ label: labelForSegment(segment, dict.nav), href })
   }
   return crumbs
 }
 
 export function AppBreadcrumb() {
   const pathname = usePathname()
-  const crumbs = crumbsFor(pathname)
+  const { dict } = useI18n()
+  const crumbs = crumbsFor(pathname, dict)
 
   const first = crumbs[0]
   const last = crumbs[crumbs.length - 1]

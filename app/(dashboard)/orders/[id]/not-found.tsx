@@ -2,6 +2,7 @@ import Link from "next/link"
 import { PackageXIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { getDictionary } from "@/lib/i18n"
 import {
   Empty,
   EmptyContent,
@@ -11,21 +12,22 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 
-export default function OrderNotFound() {
+export default async function OrderNotFound() {
+  const { dict } = await getDictionary()
+  const t = dict.pages.orders.detail
+
   return (
     <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <PackageXIcon />
         </EmptyMedia>
-        <EmptyTitle>Order not found</EmptyTitle>
-        <EmptyDescription>
-          That order id does not exist in the mock dataset.
-        </EmptyDescription>
+        <EmptyTitle>{t.notFound}</EmptyTitle>
+        <EmptyDescription>{t.notFoundBody}</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
         <Button render={<Link href="/orders" />} nativeButton={false}>
-          Back to orders
+          {t.back}
         </Button>
       </EmptyContent>
     </Empty>

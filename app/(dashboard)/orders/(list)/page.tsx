@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/shell/page-header"
 import { getOrders, ORDER_CITIES } from "@/lib/data/orders"
 import { SAVED_FILTERS } from "@/lib/data/saved-filters"
 import { parseOrdersQuery } from "@/lib/orders-query"
+import { getDictionary } from "@/lib/i18n"
 
 export const metadata: Metadata = {
   title: "Orders",
@@ -16,13 +17,17 @@ export default async function OrdersPage({
   searchParams,
 }: PageProps<"/orders">) {
   // In Next 16 `searchParams` is a Promise.
+  const { dict } = await getDictionary()
   const query = parseOrdersQuery(await searchParams)
   const result = await getOrders(query)
 
   return (
     <>
       <FadeIn>
-        <PageHeader title="Orders" actions={<OrdersHeaderActions />} />
+        <PageHeader
+          title={dict.pages.orders.title}
+          actions={<OrdersHeaderActions />}
+        />
       </FadeIn>
       <OrdersView
         query={query}

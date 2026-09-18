@@ -44,6 +44,7 @@ import { OrderStatusBadge } from "@/components/orders/order-status-badge"
 import { PageHeader } from "@/components/shell/page-header"
 import { getDashboardStats } from "@/lib/data/orders"
 import { ORDER_STATUS_META, formatDate, formatPrice } from "@/lib/orders-display"
+import { getDictionary } from "@/lib/i18n"
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -53,6 +54,8 @@ export const metadata: Metadata = {
 const CARD = "h-full"
 
 export default async function DashboardPage() {
+  const { dict } = await getDictionary()
+  const t = dict.pages.dashboard
   const {
     tiles,
     revenueSeries,
@@ -68,15 +71,35 @@ export default async function DashboardPage() {
   const totalOrders = channelSplit.reduce((sum, s) => sum + s.value, 0)
   const maxStatus = Math.max(...statusBreakdown.map((r) => r.count), 1)
 
+  // Slice labels are produced by the data layer in English; the dictionary owns
+  // what the reader actually sees.
+  const LABELS: Record<string, string> = {
+    revenue: t.totalRevenue,
+    orders: t.orders,
+    completed: t.completed,
+    unpaid: t.unpaid,
+    pickups: t.pickups,
+    returns: t.returns,
+    settled: t.settled,
+    awaiting: t.awaiting,
+    rejected: t.rejected,
+    "to-ship": t.toShip,
+    shipping: t.inTransit,
+    "in-query": t.inQuery,
+    due: t.dueInSevenDays,
+  }
+  const relabel = <T extends { key: string; label: string }>(rows: T[]) =>
+    rows.map((row) => ({ ...row, label: LABELS[row.key] ?? row.label }))
+
   return (
     <>
       <FadeIn>
         <PageHeader
-          title="Dashboard"
-          description="Everything on this page reads from the mock dataset in lib/data/orders.ts."
+          title={t.title}
+          description={t.description}
           actions={
             <Button render={<Link href="/orders" />} nativeButton={false}>
-              View orders
+              {dict.common.viewOrders}
               <ArrowRightIcon data-icon="inline-end" />
             </Button>
           }
@@ -102,7 +125,7 @@ export default async function DashboardPage() {
                   <CardDescription
                     className={featured ? "text-primary-foreground/80" : undefined}
                   >
-                    {tile.label}
+                    {LABELS[tile.key] ?? tile.label}
                   </CardDescription>
                   <CardTitle className="text-2xl tabular-nums">
                     <CountUp value={tile.value} format={tile.format} />
@@ -133,7 +156,7 @@ export default async function DashboardPage() {
                         : "text-xs text-muted-foreground"
                     }
                   >
-                    Compared with the previous period
+                    {t.comparedWith}
                   </span>
                 </CardFooter>
               </Card>
@@ -148,8 +171,8 @@ export default async function DashboardPage() {
           <Card className={CARD}>
             <CardHead
               icon={ChartColumnIcon}
-              title="Revenue by month"
-              description="Summed by month across the last 12 months"
+              title={t.revenueByMonth}
+              description={t.revenueByMonthHint}
             />
             <CardContent>
               <RevenueChart data={revenueSeries} />
@@ -161,14 +184,14 @@ export default async function DashboardPage() {
           <Card className={CARD}>
             <CardHead
               icon={BoxesIcon}
-              title="Orders by channel"
-              description="Pickups against returns"
+              title={t.ordersByChannel}
+              description={t.ordersByChannelHint}
             />
             <CardContent>
               <DonutCard
-                slices={channelSplit}
+                slices={relabel(channelSplit)}
                 total={totalOrders}
-                unit="orders"
+                unit={t.unitOrders}
               />
             </CardContent>
           </Card>
@@ -181,8 +204,8 @@ export default async function DashboardPage() {
           <Card className={CARD}>
             <CardHead
               icon={ReceiptTextIcon}
-              title="Orders per month"
-              description="Volume over the last 12 months"
+              title={t.ordersPerMonth}
+              description={t.ordersPerMonthHint}
             />
             <CardContent>
               <OrdersBarChart data={ordersByMonth} />
@@ -194,14 +217,14 @@ export default async function DashboardPage() {
           <Card className={CARD}>
             <CardHead
               icon={CreditCardIcon}
-              title="Payment state"
-              description="Where the money currently sits"
+              title={t.paymentState}
+              description={t.paymentStateHint}
             />
             <CardContent>
               <DonutCard
-                slices={paymentSplit}
+                slices={relabel(paymentSplit)}
                 total={totalOrders}
-                unit="orders"
+                unit={t.unitOrders}
               />
             </CardContent>
           </Card>
@@ -211,8 +234,8 @@ export default async function DashboardPage() {
           <Card className={CARD}>
             <CardHead
               icon={TruckIcon}
-              title="Fulfilment"
-              description="What the warehouse owes today"
+              title={t.fulfilment}
+              description={t.fulfilmentHint}
             />
             <CardContent className="flex flex-1 flex-col">
               <div className="grid flex-1 grid-cols-2 grid-rows-2 gap-3">
@@ -226,7 +249,7 @@ export default async function DashboardPage() {
                       className="text-2xl font-semibold tabular-nums"
                     />
                     <span className="text-xs text-muted-foreground">
-                      {item.label}
+                      {LABELS[item.key] ?? item.label}
                     </span>
                   </div>
                 ))}
@@ -242,8 +265,8 @@ export default async function DashboardPage() {
           <Card className={CARD}>
             <CardHead
               icon={LayersIcon}
-              title="Recent orders"
-              description="The six most recently created"
+              title={t.recentOrders}
+              description={t.recentOrdersHint}
               action={
                 <Button
                   variant="ghost"
@@ -251,7 +274,7 @@ export default async function DashboardPage() {
                   render={<Link href="/orders" />}
                   nativeButton={false}
                 >
-                  All orders
+                  {dict.common.allOrders}
                   <ArrowRightIcon data-icon="inline-end" />
                 </Button>
               }
@@ -260,12 +283,14 @@ export default async function DashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Order</TableHead>
+                    <TableHead>{dict.pages.orders.columns.product}</TableHead>
                     <TableHead className="hidden sm:table-cell">
-                      Customer
+                      {dict.pages.orders.columns.customer}
                     </TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
+                    <TableHead>{dict.pages.orders.columns.status}</TableHead>
+                    <TableHead className="text-right">
+                      {dict.pages.orders.columns.price}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -303,8 +328,8 @@ export default async function DashboardPage() {
           <Card className={CARD}>
             <CardHead
               icon={TrophyIcon}
-              title="Top products"
-              description="By revenue across all orders"
+              title={t.topProducts}
+              description={t.topProductsHint}
             />
             <CardContent className="flex flex-1 flex-col">
               <ol className="flex flex-1 flex-col justify-between gap-3">
@@ -318,7 +343,7 @@ export default async function DashboardPage() {
                         {product.name}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {product.orders} orders
+                        {product.orders} {t.unitOrders}
                       </span>
                     </span>
                     <CountUp
@@ -339,8 +364,8 @@ export default async function DashboardPage() {
         <Card>
           <CardHead
             icon={ChartColumnIcon}
-            title="Breakdown by status"
-            description={`All ${totalOrders} orders, grouped by where they currently sit`}
+            title={t.breakdown}
+            description={`${totalOrders} ${t.unitOrders}`}
           />
           <CardContent>
             <Separator className="mb-4" />
@@ -351,9 +376,12 @@ export default async function DashboardPage() {
                   <li key={row.status} className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <Badge variant={meta.variant}>{meta.label}</Badge>
+                        <Badge variant={meta.variant}>
+                          {dict.orderStatus[row.status]}
+                        </Badge>
                         <span className="text-sm text-muted-foreground">
-                          <CountUp value={row.share} format="percent" /> of orders
+                          <CountUp value={row.share} format="percent" />{" "}
+                          {t.ofOrders}
                         </span>
                       </div>
                       <div className="flex items-baseline gap-3">

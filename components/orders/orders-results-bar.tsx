@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { buildOrdersHref, PER_PAGE_OPTIONS } from "@/lib/orders-query"
+import { useI18n } from "@/components/i18n/locale-provider"
 import type { OrdersQuery, OrdersResult } from "@/lib/types/order"
 
 const PER_PAGE_ITEMS = PER_PAGE_OPTIONS.map((value) => ({
@@ -101,6 +102,7 @@ export function OrdersResultsBar({
   hideOnMobile?: boolean
 }) {
   const router = useRouter()
+  const { dict } = useI18n()
   const { from, to, total, page, pageCount } = result
   const pages = pageWindow(page, pageCount)
 
@@ -114,8 +116,8 @@ export function OrdersResultsBar({
     >
       <p className="text-sm text-muted-foreground" aria-live="polite">
         {total === 0
-          ? "No results"
-          : `showing ${from} - ${to} of ${total} results`}
+          ? dict.common.noResults
+          : `${from} - ${to} / ${total}`}
       </p>
 
       <Pagination className="mx-0 w-auto">
@@ -169,7 +171,9 @@ export function OrdersResultsBar({
       </Pagination>
 
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Items per page</span>
+        <span className="text-sm text-muted-foreground">
+          {dict.pages.orders.itemsPerPage}
+        </span>
         <Select
           items={PER_PAGE_ITEMS}
           value={String(query.perPage)}
@@ -180,7 +184,7 @@ export function OrdersResultsBar({
             )
           }
         >
-          <SelectTrigger size="sm" aria-label="Items per page">
+          <SelectTrigger size="sm" aria-label={dict.pages.orders.itemsPerPage}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false} align="end">

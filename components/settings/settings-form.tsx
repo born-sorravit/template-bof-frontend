@@ -25,6 +25,9 @@ import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
+import { LanguageSwitcher } from "@/components/i18n/language-switcher"
+import { useI18n } from "@/components/i18n/locale-provider"
+import { fill } from "@/lib/i18n/fill"
 
 const CURRENCIES = [
   { label: "US dollar (USD)", value: "USD" },
@@ -40,14 +43,16 @@ const TIMEZONES = [
   { label: "Europe/London", value: "Europe/London" },
 ]
 
-const PER_PAGE = [
-  { label: "10 rows", value: "10" },
-  { label: "20 rows", value: "20" },
-  { label: "50 rows", value: "50" },
-]
+const PER_PAGE_VALUES = ["10", "20", "50"] as const
 
 /** A URL-free form: these preferences are local state, not searchParams. */
 export function SettingsForm() {
+  const { dict } = useI18n()
+  const t = dict.pages.settings
+  const perPageItems = PER_PAGE_VALUES.map((value) => ({
+    label: fill(t.rows, { count: value }),
+    value,
+  }))
   const [pending, setPending] = React.useState(false)
   const [currency, setCurrency] = React.useState("USD")
   const [timezone, setTimezone] = React.useState("UTC")
@@ -59,20 +64,17 @@ export function SettingsForm() {
     // Mock persistence: there is no API behind this template yet.
     window.setTimeout(() => {
       setPending(false)
-      toast.add({
-        title: "Settings saved",
-        description: "Mock only — wire this to your API to persist it.",
-      })
+      toast.add({ title: t.saved, description: t.savedHint })
     }, 700)
   }
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-6">
       <FieldSet>
-        <FieldLegend variant="label">Workspace</FieldLegend>
+        <FieldLegend variant="label">{t.workspace}</FieldLegend>
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="workspace-name">Workspace name</FieldLabel>
+            <FieldLabel htmlFor="workspace-name">{t.workspaceName}</FieldLabel>
             <Input
               id="workspace-name"
               name="workspaceName"
@@ -80,19 +82,17 @@ export function SettingsForm() {
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="support-email">Support email</FieldLabel>
+            <FieldLabel htmlFor="support-email">{t.supportEmail}</FieldLabel>
             <Input
               id="support-email"
               name="supportEmail"
               type="email"
               defaultValue="support@northwind.example"
             />
-            <FieldDescription>
-              Shown on invoices and in customer emails.
-            </FieldDescription>
+            <FieldDescription>{t.supportEmailHint}</FieldDescription>
           </Field>
           <Field>
-            <FieldLabel htmlFor="address">Registered address</FieldLabel>
+            <FieldLabel htmlFor="address">{t.address}</FieldLabel>
             <Textarea
               id="address"
               name="address"
@@ -106,16 +106,16 @@ export function SettingsForm() {
       <FieldSeparator />
 
       <FieldSet>
-        <FieldLegend variant="label">Regional</FieldLegend>
+        <FieldLegend variant="label">{t.regional}</FieldLegend>
         <FieldGroup>
           <Field>
-            <FieldLabel>Currency</FieldLabel>
+            <FieldLabel>{t.currency}</FieldLabel>
             <Select
               items={CURRENCIES}
               value={currency}
               onValueChange={(value) => setCurrency(String(value))}
             >
-              <SelectTrigger className="w-full" aria-label="Currency">
+              <SelectTrigger className="w-full" aria-label={t.currency}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent alignItemWithTrigger={false}>
@@ -130,13 +130,13 @@ export function SettingsForm() {
             </Select>
           </Field>
           <Field>
-            <FieldLabel>Timezone</FieldLabel>
+            <FieldLabel>{t.timezone}</FieldLabel>
             <Select
               items={TIMEZONES}
               value={timezone}
               onValueChange={(value) => setTimezone(String(value))}
             >
-              <SelectTrigger className="w-full" aria-label="Timezone">
+              <SelectTrigger className="w-full" aria-label={t.timezone}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent alignItemWithTrigger={false}>
@@ -149,24 +149,21 @@ export function SettingsForm() {
                 </SelectGroup>
               </SelectContent>
             </Select>
-            <FieldDescription>
-              Dates in this template are pinned to UTC so the server and browser
-              always agree.
-            </FieldDescription>
+            <FieldDescription>{t.timezoneHint}</FieldDescription>
           </Field>
           <Field>
-            <FieldLabel>Default rows per page</FieldLabel>
+            <FieldLabel>{t.rowsPerPage}</FieldLabel>
             <Select
-              items={PER_PAGE}
+              items={perPageItems}
               value={perPage}
               onValueChange={(value) => setPerPage(String(value))}
             >
-              <SelectTrigger className="w-full" aria-label="Rows per page">
+              <SelectTrigger className="w-full" aria-label={t.rowsPerPage}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent alignItemWithTrigger={false}>
                 <SelectGroup>
-                  {PER_PAGE.map((item) => (
+                  {perPageItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -181,20 +178,31 @@ export function SettingsForm() {
       <FieldSeparator />
 
       <FieldSet>
-        <FieldLegend variant="label">Notifications</FieldLegend>
+        <FieldLegend variant="label">{dict.common.language}</FieldLegend>
         <FieldGroup>
           <Field orientation="horizontal">
-            <FieldLabel htmlFor="notify-orders">New order alerts</FieldLabel>
+            <FieldLabel>{t.language}</FieldLabel>
+            <LanguageSwitcher variant="labelled" />
+          </Field>
+          <FieldDescription>{t.languageHint}</FieldDescription>
+        </FieldGroup>
+      </FieldSet>
+
+      <FieldSeparator />
+
+      <FieldSet>
+        <FieldLegend variant="label">{t.notifications}</FieldLegend>
+        <FieldGroup>
+          <Field orientation="horizontal">
+            <FieldLabel htmlFor="notify-orders">{t.newOrderAlerts}</FieldLabel>
             <Switch id="notify-orders" name="notifyOrders" defaultChecked />
           </Field>
           <Field orientation="horizontal">
-            <FieldLabel htmlFor="notify-failed">
-              Failed payment alerts
-            </FieldLabel>
+            <FieldLabel htmlFor="notify-failed">{t.failedPaymentAlerts}</FieldLabel>
             <Switch id="notify-failed" name="notifyFailed" defaultChecked />
           </Field>
           <Field orientation="horizontal">
-            <FieldLabel htmlFor="notify-digest">Weekly digest</FieldLabel>
+            <FieldLabel htmlFor="notify-digest">{t.weeklyDigest}</FieldLabel>
             <Switch id="notify-digest" name="notifyDigest" />
           </Field>
         </FieldGroup>
@@ -203,10 +211,10 @@ export function SettingsForm() {
       <div className="flex items-center gap-2">
         <Button type="submit" disabled={pending}>
           {pending ? <Spinner data-icon="inline-start" /> : null}
-          {pending ? "Saving..." : "Save changes"}
+          {pending ? dict.common.saving : dict.common.save}
         </Button>
         <Button type="reset" variant="outline">
-          Reset
+          {dict.common.reset}
         </Button>
       </div>
     </form>

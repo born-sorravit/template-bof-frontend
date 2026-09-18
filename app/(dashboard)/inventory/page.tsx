@@ -17,10 +17,13 @@ import { CardHead } from "@/components/dashboard/card-head"
 import { PageHeader } from "@/components/shell/page-header"
 import { StatTiles } from "@/components/shell/stat-tiles"
 import { getInventory, STOCK_STATE_META } from "@/lib/data/inventory"
+import { fill, getDictionary } from "@/lib/i18n"
 
 export const metadata: Metadata = { title: "Inventory" }
 
 export default async function InventoryPage() {
+  const { dict } = await getDictionary()
+  const t = dict.pages.inventory
   const rows = await getInventory()
   const onHand = rows.reduce((sum, r) => sum + r.onHand, 0)
   const reserved = rows.reduce((sum, r) => sum + r.reserved, 0)
@@ -32,17 +35,17 @@ export default async function InventoryPage() {
     <>
       <FadeIn>
         <PageHeader
-          title="Inventory"
-          description="Stock positions per SKU, with reserved units held against open orders."
+          title={t.title}
+          description={t.description}
         />
       </FadeIn>
 
       <StatTiles
         tiles={[
-          { key: "skus", label: "SKUs tracked", value: rows.length },
-          { key: "onhand", label: "Units on hand", value: onHand },
-          { key: "reserved", label: "Reserved", value: reserved, hint: "Committed to open orders" },
-          { key: "action", label: "Need action", value: needsAction, hint: "At or below reorder point" },
+          { key: "skus", label: t.skusTracked, value: rows.length },
+          { key: "onhand", label: t.unitsOnHand, value: onHand },
+          { key: "reserved", label: t.reserved, value: reserved, hint: t.reservedHint },
+          { key: "action", label: t.needAction, value: needsAction, hint: t.needActionHint },
         ]}
       />
 
@@ -50,28 +53,27 @@ export default async function InventoryPage() {
         <Card>
           <CardHead
             icon={PackageIcon}
-            title="Stock by SKU"
-            description="Available is on hand minus reserved"
+            title={t.stockBySku}
+            description={t.stockBySkuHint}
           />
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>SKU</TableHead>
+                  <TableHead>{t.sku}</TableHead>
                   <TableHead className="hidden lg:table-cell">
-                    Location
+                    {t.location}
                   </TableHead>
-                  <TableHead>State</TableHead>
-                  <TableHead className="text-right">On hand</TableHead>
+                  <TableHead>{t.state}</TableHead>
+                  <TableHead className="text-right">{t.onHand}</TableHead>
                   <TableHead className="hidden text-right md:table-cell">
-                    Reserved
+                    {t.reserved}
                   </TableHead>
-                  <TableHead className="w-40">Against reorder point</TableHead>
+                  <TableHead className="w-40">{t.againstReorder}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.map((row) => {
-                  const state = STOCK_STATE_META[row.state]
                   const pct = Math.min(
                     100,
                     Math.round((row.available / Math.max(row.reorderAt, 1)) * 100)
@@ -92,7 +94,9 @@ export default async function InventoryPage() {
                         {row.location}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={state.variant}>{state.label}</Badge>
+                        <Badge variant={STOCK_STATE_META[row.state].variant}>
+                          {dict.stockState[row.state]}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {row.onHand}
@@ -103,8 +107,10 @@ export default async function InventoryPage() {
                       <TableCell>
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-muted-foreground tabular-nums">
-                            {row.available} available · reorder at{" "}
-                            {row.reorderAt}
+                            {fill(t.availableReorder, {
+                              available: row.available,
+                              reorderAt: row.reorderAt,
+                            })}
                           </span>
                           <Progress value={pct} />
                         </div>

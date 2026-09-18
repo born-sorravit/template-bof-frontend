@@ -20,12 +20,8 @@ import {
 import { DeliveryStatus } from "@/components/orders/delivery-status"
 import { OrderStatusBadge } from "@/components/orders/order-status-badge"
 import { OrdersRowActions } from "@/components/orders/orders-row-actions"
-import {
-  formatDate,
-  formatPrice,
-  formatTime,
-  ORDER_SORT_META,
-} from "@/lib/orders-display"
+import { formatDate, formatPrice, formatTime } from "@/lib/orders-display"
+import { useI18n } from "@/components/i18n/locale-provider"
 import { buildOrdersHref, nextSortDirection } from "@/lib/orders-query"
 import type { Order, OrderSortKey, OrdersQuery } from "@/lib/types/order"
 
@@ -38,6 +34,12 @@ function SortHeader({
   query: OrdersQuery
   className?: string
 }) {
+  const { dict } = useI18n()
+  const label = {
+    createdAt: dict.pages.orders.columns.created,
+    deadline: dict.pages.orders.columns.deadline,
+    price: dict.pages.orders.columns.price,
+  }[column]
   const active = query.sort === column
   const Icon = !active
     ? ChevronsUpDownIcon
@@ -50,7 +52,7 @@ function SortHeader({
       <Button
         variant="ghost"
         size="sm"
-        aria-label={`Sort by ${ORDER_SORT_META[column].label}`}
+        aria-label={label}
         render={
           <Link
             href={buildOrdersHref(query, {
@@ -63,7 +65,7 @@ function SortHeader({
         nativeButton={false}
       >
         <Icon data-icon="inline-start" />
-        {ORDER_SORT_META[column].label}
+        {label}
       </Button>
     </TableHead>
   )
@@ -82,6 +84,8 @@ export function OrdersTable({
   onToggleRow: (id: string, checked: boolean) => void
   onToggleAll: (checked: boolean) => void
 }) {
+  const { dict } = useI18n()
+  const c = dict.pages.orders.columns
   const visibleSelected = rows.filter((row) => selectedIds.has(row.id)).length
   const allSelected = rows.length > 0 && visibleSelected === rows.length
 
@@ -94,19 +98,17 @@ export function OrdersTable({
           <TableRow className="hover:bg-transparent [&>th]:border-b">
             <TableHead className="w-10">
               <Checkbox
-                aria-label="Select all orders on this page"
+                aria-label={c.id}
                 checked={allSelected}
                 indeterminate={visibleSelected > 0 && !allSelected}
                 onCheckedChange={(checked) => onToggleAll(Boolean(checked))}
               />
             </TableHead>
-            <TableHead>ID No.</TableHead>
-            <TableHead>Product</TableHead>
-            <TableHead className="hidden lg:table-cell">Customer</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="hidden lg:table-cell">
-              Delivery status
-            </TableHead>
+            <TableHead>{c.id}</TableHead>
+            <TableHead>{c.product}</TableHead>
+            <TableHead className="hidden lg:table-cell">{c.customer}</TableHead>
+            <TableHead>{c.status}</TableHead>
+            <TableHead className="hidden lg:table-cell">{c.delivery}</TableHead>
             <SortHeader
               column="createdAt"
               query={query}
@@ -118,7 +120,7 @@ export function OrdersTable({
               className="hidden xl:table-cell"
             />
             <SortHeader column="price" query={query} />
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="text-right">{c.actions}</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -134,7 +136,7 @@ export function OrdersTable({
               >
                 <TableCell>
                   <Checkbox
-                    aria-label={`Select order ${order.id}`}
+                    aria-label={order.id}
                     checked={selected}
                     onCheckedChange={(checked) =>
                       onToggleRow(order.id, Boolean(checked))

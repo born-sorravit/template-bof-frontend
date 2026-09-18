@@ -18,10 +18,13 @@ import { PageHeader } from "@/components/shell/page-header"
 import { StatTiles } from "@/components/shell/stat-tiles"
 import { CUSTOMER_TIER_META, getCustomers } from "@/lib/data/customers"
 import { formatDate, formatPrice, initialsOf } from "@/lib/orders-display"
+import { fill, getDictionary } from "@/lib/i18n"
 
 export const metadata: Metadata = { title: "Customers" }
 
 export default async function CustomersPage() {
+  const { dict } = await getDictionary()
+  const t = dict.pages.customers
   const customers = await getCustomers()
   const spend = customers.reduce((sum, c) => sum + c.spend, 0)
   const vip = customers.filter((c) => c.tier === "vip").length
@@ -30,19 +33,19 @@ export default async function CustomersPage() {
     <>
       <FadeIn>
         <PageHeader
-          title="Customers"
-          description="Aggregated from the same 88 orders, so the totals reconcile with /orders."
+          title={t.title}
+          description={t.description}
         />
       </FadeIn>
 
       <StatTiles
         tiles={[
-          { key: "total", label: "Customers", value: customers.length },
-          { key: "spend", label: "Lifetime revenue", value: Math.round(spend), format: "currency" },
-          { key: "vip", label: "VIP tier", value: vip, hint: "Spend of $8,000 or more" },
+          { key: "total", label: t.customers, value: customers.length },
+          { key: "spend", label: t.lifetimeRevenue, value: Math.round(spend), format: "currency" },
+          { key: "vip", label: t.vipTier, value: vip, hint: t.vipHint },
           {
             key: "aov",
-            label: "Average per customer",
+            label: t.averagePer,
             value: Math.round(spend / Math.max(customers.length, 1)),
             format: "currency",
           },
@@ -53,26 +56,25 @@ export default async function CustomersPage() {
         <Card>
           <CardHead
             icon={UsersIcon}
-            title="All customers"
-            description={`${customers.length} people have ordered at least once`}
+            title={t.allCustomers}
+            description={fill(t.allCustomersHint, { count: customers.length })}
           />
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead className="hidden md:table-cell">City</TableHead>
-                  <TableHead>Tier</TableHead>
-                  <TableHead className="text-right">Orders</TableHead>
-                  <TableHead className="text-right">Spend</TableHead>
+                  <TableHead>{t.customer}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t.city}</TableHead>
+                  <TableHead>{t.tier}</TableHead>
+                  <TableHead className="text-right">{t.orders}</TableHead>
+                  <TableHead className="text-right">{t.spend}</TableHead>
                   <TableHead className="hidden text-right lg:table-cell">
-                    Last order
+                    {t.lastOrder}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {customers.map((customer) => {
-                  const tier = CUSTOMER_TIER_META[customer.tier]
                   return (
                     <TableRow key={customer.id}>
                       <TableCell>
@@ -96,7 +98,9 @@ export default async function CustomersPage() {
                         {customer.city}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={tier.variant}>{tier.label}</Badge>
+                        <Badge variant={CUSTOMER_TIER_META[customer.tier].variant}>
+                          {dict.customerTier[customer.tier]}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {customer.orders}

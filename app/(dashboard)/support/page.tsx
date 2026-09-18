@@ -23,6 +23,7 @@ import { CardHead } from "@/components/dashboard/card-head"
 import { PageHeader } from "@/components/shell/page-header"
 import { StatTiles } from "@/components/shell/stat-tiles"
 import { PRIORITY_META, TICKETS, TICKET_STATE_META } from "@/lib/data/support"
+import { getDictionary } from "@/lib/i18n"
 
 export const metadata: Metadata = { title: "Support" }
 
@@ -31,7 +32,9 @@ function hoursLabel(hours: number) {
   return `${Math.floor(hours / 24)}d ago`
 }
 
-export default function SupportPage() {
+export default async function SupportPage() {
+  const { dict } = await getDictionary()
+  const t = dict.pages.support
   const open = TICKETS.filter((t) => t.state === "open")
   const unassigned = TICKETS.filter((t) => t.assignee === null)
   const urgent = TICKETS.filter(
@@ -42,17 +45,17 @@ export default function SupportPage() {
     <>
       <FadeIn>
         <PageHeader
-          title="Support"
-          description="Tickets raised against orders, deliveries and accounts."
+          title={t.title}
+          description={t.description}
         />
       </FadeIn>
 
       <StatTiles
         tiles={[
-          { key: "open", label: "Open tickets", value: open.length },
-          { key: "urgent", label: "Urgent", value: urgent.length, hint: "Breach risk within 4 hours" },
-          { key: "unassigned", label: "Unassigned", value: unassigned.length },
-          { key: "solved", label: "Solved this week", value: TICKETS.filter((t) => t.state === "solved").length },
+          { key: "open", label: t.openTickets, value: open.length },
+          { key: "urgent", label: t.urgent, value: urgent.length, hint: t.urgentHint },
+          { key: "unassigned", label: t.unassigned, value: unassigned.length },
+          { key: "solved", label: t.solvedWeek, value: TICKETS.filter((row) => row.state === "solved").length },
         ]}
       />
 
@@ -60,8 +63,8 @@ export default function SupportPage() {
         <Card>
           <CardHead
             icon={LifeBuoyIcon}
-            title="Ticket queue"
-            description="Sorted by most recent activity"
+            title={t.queue}
+            description={t.queueHint}
           />
           <CardContent>
             {TICKETS.length === 0 ? (
@@ -70,32 +73,28 @@ export default function SupportPage() {
                   <EmptyMedia variant="icon">
                     <LifeBuoyIcon />
                   </EmptyMedia>
-                  <EmptyTitle>Nothing in the queue</EmptyTitle>
-                  <EmptyDescription>
-                    New tickets will appear here as customers write in.
-                  </EmptyDescription>
+                  <EmptyTitle>{t.emptyTitle}</EmptyTitle>
+                  <EmptyDescription>{t.emptyBody}</EmptyDescription>
                 </EmptyHeader>
               </Empty>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Ticket</TableHead>
+                    <TableHead>{t.ticket}</TableHead>
                     <TableHead className="hidden md:table-cell">
-                      Requester
+                      {t.requester}
                     </TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>State</TableHead>
+                    <TableHead>{t.priority}</TableHead>
+                    <TableHead>{t.state}</TableHead>
                     <TableHead className="hidden lg:table-cell">
-                      Assignee
+                      {t.assignee}
                     </TableHead>
-                    <TableHead className="text-right">Updated</TableHead>
+                    <TableHead className="text-right">{t.updated}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {TICKETS.map((ticket) => {
-                    const priority = PRIORITY_META[ticket.priority]
-                    const state = TICKET_STATE_META[ticket.state]
                     return (
                       <TableRow key={ticket.id}>
                         <TableCell className="max-w-72">
@@ -112,12 +111,14 @@ export default function SupportPage() {
                           {ticket.requester}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={priority.variant}>
-                            {priority.label}
+                          <Badge variant={PRIORITY_META[ticket.priority].variant}>
+                            {dict.ticketPriority[ticket.priority]}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={state.variant}>{state.label}</Badge>
+                          <Badge variant={TICKET_STATE_META[ticket.state].variant}>
+                            {dict.ticketState[ticket.state]}
+                          </Badge>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           {ticket.assignee ? (
@@ -125,7 +126,7 @@ export default function SupportPage() {
                               {ticket.assignee}
                             </span>
                           ) : (
-                            <Badge variant="warning">Unassigned</Badge>
+                            <Badge variant="warning">{t.unassigned}</Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-right whitespace-nowrap text-muted-foreground">

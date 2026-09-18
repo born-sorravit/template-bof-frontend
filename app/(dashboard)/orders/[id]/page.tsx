@@ -43,6 +43,7 @@ import {
   formatTime,
   initialsOf,
 } from "@/lib/orders-display"
+import { getDictionary } from "@/lib/i18n"
 
 export async function generateMetadata({
   params,
@@ -55,6 +56,8 @@ export async function generateMetadata({
 export default async function OrderDetailPage({
   params,
 }: PageProps<"/orders/[id]">) {
+  const { dict } = await getDictionary()
+  const t = dict.pages.orders.detail
   const { id } = await params
   const order = await getOrder(id)
 
@@ -78,7 +81,7 @@ export default async function OrderDetailPage({
               nativeButton={false}
             >
               <ArrowLeftIcon data-icon="inline-start" />
-              Back to orders
+              {t.back}
             </Button>
           }
         />
@@ -88,10 +91,10 @@ export default async function OrderDetailPage({
         <StaggerItem className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Line items</CardTitle>
+              <CardTitle>{t.lineItems}</CardTitle>
               <CardDescription>
-                {order.items.length} item{order.items.length === 1 ? "" : "s"} in
-                this order
+                {order.items.length}{" "}
+                {order.items.length === 1 ? t.item : t.items}
               </CardDescription>
               <CardAction>
                 <OrderStatusBadge status={order.status} />
@@ -101,10 +104,10 @@ export default async function OrderDetailPage({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead className="text-right">Qty</TableHead>
-                    <TableHead className="text-right">Unit</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>{t.lineItems}</TableHead>
+                    <TableHead className="text-right">{t.qty}</TableHead>
+                    <TableHead className="text-right">{t.unit}</TableHead>
+                    <TableHead className="text-right">{t.total}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -126,7 +129,7 @@ export default async function OrderDetailPage({
               </Table>
             </CardContent>
             <CardFooter className="justify-between">
-              <span className="text-sm text-muted-foreground">Subtotal</span>
+              <span className="text-sm text-muted-foreground">{t.subtotal}</span>
               <span className="font-medium tabular-nums">
                 {formatPrice(subtotal)}
               </span>
@@ -137,7 +140,7 @@ export default async function OrderDetailPage({
         <StaggerItem className="flex flex-col gap-4">
           <Card>
             <CardHeader>
-              <CardTitle>Customer</CardTitle>
+              <CardTitle>{t.customer}</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center gap-3">
               <Avatar>
@@ -161,32 +164,32 @@ export default async function OrderDetailPage({
 
           <Card>
             <CardHeader>
-              <CardTitle>Summary</CardTitle>
+              <CardTitle>{t.summary}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="flex flex-col gap-3 text-sm">
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="text-muted-foreground">Delivery</dt>
+                  <dt className="text-muted-foreground">{t.delivery}</dt>
                   <dd>
                     <DeliveryStatus status={order.deliveryStatus} />
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="text-muted-foreground">Channel</dt>
-                  <dd className="capitalize">{order.channel}</dd>
+                  <dt className="text-muted-foreground">{t.channel}</dt>
+                  <dd>{dict.orderChannel[order.channel]}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="text-muted-foreground">Created</dt>
+                  <dt className="text-muted-foreground">{t.created}</dt>
                   <dd>
                     {formatDate(order.createdAt)} {formatTime(order.createdAt)}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="text-muted-foreground">Deadline</dt>
+                  <dt className="text-muted-foreground">{t.deadline}</dt>
                   <dd>{formatDate(order.deadline)}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="text-muted-foreground">Total</dt>
+                  <dt className="text-muted-foreground">{t.total}</dt>
                   <dd className="font-medium tabular-nums">
                     {formatPrice(order.price)}
                   </dd>
@@ -199,10 +202,8 @@ export default async function OrderDetailPage({
         <StaggerItem className="lg:col-span-3">
           <Card>
             <CardHeader>
-              <CardTitle>Timeline</CardTitle>
-              <CardDescription>
-                Everything recorded against this order
-              </CardDescription>
+              <CardTitle>{t.timeline}</CardTitle>
+              <CardDescription>{t.timelineHint}</CardDescription>
             </CardHeader>
             <CardContent>
               <ItemGroup>

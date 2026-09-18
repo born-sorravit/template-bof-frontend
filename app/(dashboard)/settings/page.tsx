@@ -6,16 +6,20 @@ import { FadeIn } from "@/components/motion/fade-in"
 import { CardHead } from "@/components/dashboard/card-head"
 import { SettingsForm } from "@/components/settings/settings-form"
 import { PageHeader } from "@/components/shell/page-header"
+import { getDictionary } from "@/lib/i18n"
 
 export const metadata: Metadata = { title: "Settings" }
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const { dict } = await getDictionary()
+  const t = dict.pages.settings
+
   return (
     <>
       <FadeIn>
         <PageHeader
-          title="Settings"
-          description="Workspace, regional and notification preferences."
+          title={t.title}
+          description={t.description}
         />
       </FadeIn>
 
@@ -23,8 +27,8 @@ export default function SettingsPage() {
         <Card className="max-w-2xl">
           <CardHead
             icon={SettingsIcon}
-            title="Workspace settings"
-            description="Saving shows a toast; nothing is persisted yet."
+            title={t.cardTitle}
+            description={t.cardHint}
           />
           <CardContent>
             <SettingsForm />

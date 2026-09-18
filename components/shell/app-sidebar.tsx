@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { MoonStarIcon } from "lucide-react"
+import { StoreIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -20,10 +20,13 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { NAV_GROUPS } from "@/components/shell/nav-items"
+import { useI18n } from "@/components/i18n/locale-provider"
 import { NavUser } from "@/components/shell/nav-user"
+import type { DemoUser } from "@/lib/auth/users"
 
-export function AppSidebar() {
+export function AppSidebar({ user }: { user: DemoUser }) {
   const pathname = usePathname()
+  const { dict } = useI18n()
 
   return (
     <Sidebar collapsible="icon">
@@ -34,7 +37,7 @@ export function AppSidebar() {
               <SidebarMenuButton
                 size="lg"
                 variant="nav"
-                tooltip="Northwind Commerce"
+                tooltip={`${dict.brand.name} ${dict.brand.tagline}`}
                 render={<Link href="/dashboard" />}
                 className="gap-2.5"
               >
@@ -42,10 +45,10 @@ export function AppSidebar() {
                   aria-hidden
                   className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:rounded-lg"
                 >
-                  <MoonStarIcon />
+                  <StoreIcon />
                 </span>
                 <span className="truncate text-base font-semibold text-sidebar-brand group-data-[collapsible=icon]:hidden">
-                  Northwind
+                  {dict.brand.name}
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -53,15 +56,17 @@ export function AppSidebar() {
 
           {/* Collapse control lives in the rail header, as in the reference.
               The topbar keeps its own trigger for re-opening and for mobile. */}
-          <SidebarTrigger className="shrink-0 group-data-[collapsible=icon]:hidden" />
+          <SidebarTrigger className="hidden shrink-0 group-data-[collapsible=icon]:hidden md:flex" />
         </div>
       </SidebarHeader>
 
       <SidebarContent className="gap-0">
         {NAV_GROUPS.map((group, index) => (
-          <SidebarGroup key={group.label ?? `group-${index}`}>
-            {group.label ? (
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+          <SidebarGroup key={group.groupKey ?? `group-${index}`}>
+            {group.groupKey ? (
+              <SidebarGroupLabel>
+                {dict.nav.groups[group.groupKey]}
+              </SidebarGroupLabel>
             ) : null}
             <SidebarGroupContent>
               <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
@@ -78,13 +83,13 @@ export function AppSidebar() {
                         <SidebarMenuButton
                           variant="nav"
                           aria-disabled
-                          tooltip={`${item.title} — coming soon`}
+                          tooltip={`${dict.nav[item.key]} — ${dict.common.soon}`}
                         >
                           <item.icon />
-                          <span>{item.title}</span>
+                          <span>{dict.nav[item.key]}</span>
                         </SidebarMenuButton>
                         <SidebarMenuBadge>
-                          <Badge variant="secondary">Soon</Badge>
+                          <Badge variant="secondary">{dict.common.soon}</Badge>
                         </SidebarMenuBadge>
                       </SidebarMenuItem>
                     )
@@ -95,11 +100,11 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         variant="nav"
                         isActive={isActive}
-                        tooltip={item.title}
+                        tooltip={dict.nav[item.key]}
                         render={<Link href={item.href} />}
                       >
                         <item.icon />
-                        <span>{item.title}</span>
+                        <span>{dict.nav[item.key]}</span>
                       </SidebarMenuButton>
                       {item.badge ? (
                         <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
@@ -114,7 +119,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        <NavUser />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )

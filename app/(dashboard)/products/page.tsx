@@ -14,6 +14,7 @@ import { FadeIn, Stagger, StaggerItem } from "@/components/motion/fade-in"
 import { PageHeader } from "@/components/shell/page-header"
 import { getProducts } from "@/lib/data/products"
 import { formatPrice } from "@/lib/orders-display"
+import { fill, getDictionary } from "@/lib/i18n"
 
 export const metadata: Metadata = {
   title: "Products",
@@ -26,14 +27,17 @@ function stockBadge(stock: number) {
 }
 
 export default async function ProductsPage() {
+  const { dict } = await getDictionary()
   const products = await getProducts()
 
   return (
     <>
       <FadeIn>
         <PageHeader
-          title="Products"
-          description={`${products.length} products in the mock catalogue.`}
+          title={dict.pages.products.title}
+          description={fill(dict.pages.products.description, {
+            count: products.length,
+          })}
         />
       </FadeIn>
 

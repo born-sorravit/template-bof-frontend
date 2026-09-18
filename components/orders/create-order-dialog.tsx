@@ -30,20 +30,20 @@ import {
 } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
-import { ORDER_STATUS_META } from "@/lib/orders-display"
 import { ORDER_STATUS_VALUES } from "@/lib/orders-query"
+import { useI18n } from "@/components/i18n/locale-provider"
 import type { OrderStatus } from "@/lib/types/order"
-
-const STATUS_ITEMS = ORDER_STATUS_VALUES.map((value) => ({
-  label: ORDER_STATUS_META[value].label,
-  value,
-}))
 
 export function CreateOrderDialog({
   trigger,
 }: {
   trigger: React.ReactElement
 }) {
+  const { dict } = useI18n()
+  const statusItems = ORDER_STATUS_VALUES.map((value) => ({
+    label: dict.orderStatus[value],
+    value,
+  }))
   const [open, setOpen] = React.useState(false)
   const [pending, setPending] = React.useState(false)
   const [status, setStatus] = React.useState<OrderStatus>("pending")
@@ -56,8 +56,8 @@ export function CreateOrderDialog({
       setPending(false)
       setOpen(false)
       toast.add({
-        title: "Order created",
-        description: "Mock only — wire this to your API to persist it.",
+        title: dict.pages.orders.createOrder,
+        description: dict.common.mockAction,
       })
     }, 700)
   }
@@ -68,15 +68,15 @@ export function CreateOrderDialog({
       <DialogContent>
         <form onSubmit={submit}>
           <DialogHeader>
-            <DialogTitle>Create order</DialogTitle>
-            <DialogDescription>
-              Nothing is persisted — this demonstrates the form composition.
-            </DialogDescription>
+            <DialogTitle>{dict.pages.orders.createOrder}</DialogTitle>
+            <DialogDescription>{dict.common.mockAction}</DialogDescription>
           </DialogHeader>
 
           <FieldGroup className="py-4">
             <Field>
-              <FieldLabel htmlFor="create-product">Product</FieldLabel>
+              <FieldLabel htmlFor="create-product">
+                {dict.pages.orders.columns.product}
+              </FieldLabel>
               <Input
                 id="create-product"
                 name="product"
@@ -85,7 +85,9 @@ export function CreateOrderDialog({
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="create-customer">Customer</FieldLabel>
+              <FieldLabel htmlFor="create-customer">
+                {dict.pages.orders.columns.customer}
+              </FieldLabel>
               <Input
                 id="create-customer"
                 name="customer"
@@ -93,11 +95,13 @@ export function CreateOrderDialog({
                 placeholder="Edwin Martins"
               />
               <FieldDescription>
-                Used for the confirmation email.
+                {dict.pages.settings.supportEmailHint}
               </FieldDescription>
             </Field>
             <Field>
-              <FieldLabel htmlFor="create-price">Price</FieldLabel>
+              <FieldLabel htmlFor="create-price">
+                {dict.pages.orders.columns.price}
+              </FieldLabel>
               <Input
                 id="create-price"
                 name="price"
@@ -109,9 +113,9 @@ export function CreateOrderDialog({
               />
             </Field>
             <Field>
-              <FieldLabel>Status</FieldLabel>
+              <FieldLabel>{dict.pages.orders.columns.status}</FieldLabel>
               <Select
-                items={STATUS_ITEMS}
+                items={statusItems}
                 value={status}
                 onValueChange={(value) => setStatus(value as OrderStatus)}
               >
@@ -120,7 +124,7 @@ export function CreateOrderDialog({
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
                   <SelectGroup>
-                    {STATUS_ITEMS.map((item) => (
+                    {statusItems.map((item) => (
                       <SelectItem key={item.value} value={item.value}>
                         {item.label}
                       </SelectItem>
@@ -133,11 +137,11 @@ export function CreateOrderDialog({
 
           <DialogFooter>
             <DialogClose render={<Button variant="outline" type="button" />}>
-              Cancel
+              {dict.common.cancel}
             </DialogClose>
             <Button type="submit" disabled={pending}>
               {pending ? <Spinner data-icon="inline-start" /> : null}
-              {pending ? "Creating..." : "Create order"}
+              {pending ? dict.common.saving : dict.pages.orders.createOrder}
             </Button>
           </DialogFooter>
         </form>

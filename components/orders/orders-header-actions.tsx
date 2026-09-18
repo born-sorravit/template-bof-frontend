@@ -9,34 +9,39 @@ import {
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/toast"
 import { CreateOrderDialog } from "@/components/orders/create-order-dialog"
+import { useI18n } from "@/components/i18n/locale-provider"
 
 export function OrdersHeaderActions() {
+  const { dict } = useI18n()
+
   return (
     <>
       <Button
         variant="outline"
         onClick={() =>
           toast.add({
-            title: "Export queued",
-            description: "A CSV of the current filters would be emailed to you.",
+            title: dict.common.export,
+            description: dict.common.mockAction,
           })
         }
       >
-        Export
+        {dict.common.export}
         <ExternalLinkIcon data-icon="inline-end" />
       </Button>
       <Button
         variant="outline"
-        onClick={() => toast.add({ title: "Sent to printer" })}
+        onClick={() =>
+          toast.add({ title: dict.common.print, description: dict.common.mockAction })
+        }
       >
         <PrinterIcon data-icon="inline-start" />
-        Print
+        {dict.common.print}
       </Button>
       <CreateOrderDialog
         trigger={
           <Button>
             <PlusIcon data-icon="inline-start" />
-            Create order
+            {dict.pages.orders.createOrder}
           </Button>
         }
       />

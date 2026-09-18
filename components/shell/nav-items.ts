@@ -8,6 +8,7 @@ import {
   type LucideIcon,
   MessageSquareIcon,
   PackageIcon,
+  HistoryIcon,
   ScrollTextIcon,
   SettingsIcon,
   ShieldCheckIcon,
@@ -17,8 +18,14 @@ import {
   UsersIcon,
 } from "lucide-react"
 
+import type { Dictionary } from "@/lib/i18n/dictionaries/en"
+
+export type NavKey = Exclude<keyof Dictionary["nav"], "groups">
+export type GroupKey = keyof Dictionary["nav"]["groups"]
+
 export type NavItem = {
-  title: string
+  /** Key into `dict.nav`; the label itself lives in the dictionaries. */
+  key: NavKey
   href: string
   icon: LucideIcon
   /** Rendered as a count badge on the right. */
@@ -28,75 +35,79 @@ export type NavItem = {
 }
 
 export type NavGroup = {
-  /** Uppercase section heading. Omit for the top-level group. */
-  label?: string
+  /** Key into `dict.nav.groups`. Omit for the unlabelled top group. */
+  groupKey?: GroupKey
   items: NavItem[]
 }
 
 /** Single source of truth for the sidebar and the breadcrumb labels. */
 export const NAV_GROUPS: NavGroup[] = [
   {
-    items: [{ title: "Overview", href: "/dashboard", icon: LayoutDashboardIcon }],
+    items: [{ key: "overview", href: "/dashboard", icon: LayoutDashboardIcon }],
   },
   {
-    label: "Commerce",
+    groupKey: "commerce",
     items: [
-      { title: "Orders", href: "/orders", icon: ShoppingBagIcon, badge: "88" },
-      { title: "Products", href: "/products", icon: TagIcon },
-      { title: "Inventory", href: "/inventory", icon: PackageIcon },
-      { title: "Payments", href: "/payments", icon: CreditCardIcon },
+      { key: "orders", href: "/orders", icon: ShoppingBagIcon, badge: "88" },
+      { key: "products", href: "/products", icon: TagIcon },
+      { key: "inventory", href: "/inventory", icon: PackageIcon },
+      { key: "payments", href: "/payments", icon: CreditCardIcon },
     ],
   },
   {
-    label: "Users & access",
+    groupKey: "usersAccess",
     items: [
-      { title: "Customers", href: "/customers", icon: UsersIcon },
-      { title: "Admins", href: "/admins", icon: UserCogIcon, comingSoon: true },
-      { title: "Consent", href: "/consent", icon: FileTextIcon, comingSoon: true },
-      { title: "Legal documents", href: "/legal", icon: ScrollTextIcon },
-      { title: "Admin roles", href: "/roles", icon: ShieldCheckIcon, comingSoon: true },
-      { title: "Audit log", href: "/audit-log", icon: ScrollTextIcon, comingSoon: true },
+      { key: "customers", href: "/customers", icon: UsersIcon },
+      { key: "admins", href: "/admins", icon: UserCogIcon, comingSoon: true },
+      { key: "consent", href: "/consent", icon: FileTextIcon, comingSoon: true },
+      { key: "legal", href: "/legal", icon: ScrollTextIcon },
+      { key: "roles", href: "/roles", icon: ShieldCheckIcon, comingSoon: true },
+      { key: "auditLog", href: "/audit-log", icon: HistoryIcon, comingSoon: true },
     ],
   },
   {
-    label: "Insights",
+    groupKey: "insights",
     items: [
-      { title: "Analytics", href: "/analytics", icon: BarChart3Icon },
-      { title: "Notifications", href: "/notifications", icon: BellIcon, comingSoon: true },
+      { key: "analytics", href: "/analytics", icon: BarChart3Icon },
+      { key: "notifications", href: "/notifications", icon: BellIcon, comingSoon: true },
     ],
   },
   {
-    label: "Workspace",
+    groupKey: "workspace",
     items: [
-      { title: "Messages", href: "/messages", icon: MessageSquareIcon, badge: "3" },
-      { title: "Settings", href: "/settings", icon: SettingsIcon },
-      { title: "Support", href: "/support", icon: LifeBuoyIcon },
+      { key: "messages", href: "/messages", icon: MessageSquareIcon, badge: "3" },
+      { key: "settings", href: "/settings", icon: SettingsIcon },
+      { key: "support", href: "/support", icon: LifeBuoyIcon },
     ],
   },
 ]
 
-const LABEL_BY_SEGMENT: Record<string, string> = {
-  dashboard: "Overview",
-  orders: "Orders",
-  products: "Products",
-  analytics: "Analytics",
-  inventory: "Inventory",
-  customers: "Customers",
-  payments: "Payments",
-  messages: "Messages",
-  notifications: "Notifications",
-  settings: "Settings",
-  support: "Support",
-  legal: "Legal documents",
-  admins: "Admins",
-  consent: "Consent",
-  roles: "Admin roles",
-  "audit-log": "Audit log",
+/** URL segment -> dictionary key, for the breadcrumb. */
+const SEGMENT_KEYS: Record<string, NavKey> = {
+  dashboard: "overview",
+  orders: "orders",
+  products: "products",
+  analytics: "analytics",
+  inventory: "inventory",
+  customers: "customers",
+  payments: "payments",
+  messages: "messages",
+  notifications: "notifications",
+  settings: "settings",
+  support: "support",
+  legal: "legal",
+  admins: "admins",
+  consent: "consent",
+  roles: "roles",
+  "audit-log": "auditLog",
 }
 
-export function labelForSegment(segment: string): string {
-  const known = LABEL_BY_SEGMENT[segment]
-  if (known) return known
+export function labelForSegment(
+  segment: string,
+  nav: Dictionary["nav"]
+): string {
+  const key = SEGMENT_KEYS[segment]
+  if (key) return nav[key]
 
   // Identifiers like "998-5878" must survive verbatim -- prettifying would
   // render the order id as "998 5878".

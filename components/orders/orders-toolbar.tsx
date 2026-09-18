@@ -50,12 +50,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import {
-  DATE_RANGE_META,
-  DELIVERY_STATUS_META,
-  ORDER_STATUS_META,
-  PRICE_BAND_META,
-} from "@/lib/orders-display"
+import { useI18n } from "@/components/i18n/locale-provider"
 import {
   buildOrdersHref,
   CLEARED_FILTERS,
@@ -112,31 +107,34 @@ function FilterSelect<T extends string>({
   )
 }
 
-const STATUS_ITEMS: Array<{ label: string; value: OrderStatus | null }> = [
-  { label: "All statuses", value: null },
-  ...ORDER_STATUS_VALUES.map((value) => ({
-    label: ORDER_STATUS_META[value].label,
-    value: value as OrderStatus | null,
-  })),
-]
-
-const DELIVERY_ITEMS: Array<{ label: string; value: DeliveryStatus | null }> = [
-  { label: "Any delivery status", value: null },
-  ...DELIVERY_STATUS_VALUES.map((value) => ({
-    label: DELIVERY_STATUS_META[value].label,
-    value: value as DeliveryStatus | null,
-  })),
-]
-
-const RANGE_ITEMS = DATE_RANGE_VALUES.map((value) => ({
-  label: DATE_RANGE_META[value].label,
-  value: value as DateRangeKey | null,
-}))
-
-const PRICE_ITEMS = PRICE_BAND_VALUES.map((value) => ({
-  label: PRICE_BAND_META[value].label,
-  value: value as PriceBandKey | null,
-}))
+/** Built per render so the labels follow the active locale. */
+function useFilterItems() {
+  const { dict } = useI18n()
+  return {
+    status: [
+      { label: dict.pages.orders.allStatuses, value: null },
+      ...ORDER_STATUS_VALUES.map((value) => ({
+        label: dict.orderStatus[value],
+        value: value as OrderStatus | null,
+      })),
+    ],
+    delivery: [
+      { label: dict.pages.orders.anyDeliveryStatus, value: null },
+      ...DELIVERY_STATUS_VALUES.map((value) => ({
+        label: dict.deliveryStatus[value],
+        value: value as DeliveryStatus | null,
+      })),
+    ],
+    range: DATE_RANGE_VALUES.map((value) => ({
+      label: dict.dateRange[value],
+      value: value as DateRangeKey | null,
+    })),
+    price: PRICE_BAND_VALUES.map((value) => ({
+      label: dict.priceBand[value],
+      value: value as PriceBandKey | null,
+    })),
+  }
+}
 
 function DateRangeFilter({
   query,
@@ -145,6 +143,9 @@ function DateRangeFilter({
   query: OrdersQuery
   push: (patch: Partial<OrdersQuery>) => void
 }) {
+  const { dict } = useI18n()
+  const items = useFilterItems().range
+
   return (
     <Popover>
       <PopoverTrigger
@@ -152,19 +153,21 @@ function DateRangeFilter({
       >
         <CalendarIcon data-icon="inline-start" />
         {query.range === "all"
-          ? "Date range"
-          : DATE_RANGE_META[query.range].label}
+          ? dict.pages.orders.dateRange
+          : dict.dateRange[query.range]}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-56">
-        <PopoverTitle>Created date</PopoverTitle>
+        <PopoverTitle>{dict.pages.orders.createdDate}</PopoverTitle>
         <FieldGroup className="pt-2">
           <Field>
-            <FieldLabel className="sr-only">Date range</FieldLabel>
+            <FieldLabel className="sr-only">
+              {dict.pages.orders.dateRange}
+            </FieldLabel>
             <FilterSelect
-              label="Filter by created date"
+              label={dict.pages.orders.createdDate}
               className="w-full"
               value={query.range}
-              items={RANGE_ITEMS}
+              items={items}
               onPick={(range) => push({ range: range ?? "all" })}
             />
           </Field>
@@ -183,12 +186,13 @@ function AddressFilter({
   cities: string[]
   push: (patch: Partial<OrdersQuery>) => void
 }) {
+  const { dict } = useI18n()
   const items = React.useMemo(
     () => [
-      { label: "Any address", value: null },
+      { label: dict.pages.orders.anyAddress, value: null },
       ...cities.map((city) => ({ label: city, value: city as string | null })),
     ],
-    [cities]
+    [cities, dict]
   )
 
   return (
@@ -197,15 +201,17 @@ function AddressFilter({
         render={<Button variant="outline" className="w-full md:w-auto" />}
       >
         <MapPinIcon data-icon="inline-start" />
-        {query.city ?? "Address"}
+        {query.city ?? dict.pages.orders.address}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-56">
-        <PopoverTitle>Delivery city</PopoverTitle>
+        <PopoverTitle>{dict.pages.orders.deliveryCity}</PopoverTitle>
         <FieldGroup className="pt-2">
           <Field>
-            <FieldLabel className="sr-only">City</FieldLabel>
+            <FieldLabel className="sr-only">
+              {dict.pages.orders.deliveryCity}
+            </FieldLabel>
             <FilterSelect
-              label="Filter by city"
+              label={dict.pages.orders.deliveryCity}
               className="w-full"
               value={query.city}
               items={items}
@@ -225,17 +231,19 @@ function SavedFiltersPopover({
   query: OrdersQuery
   savedFilters: SavedFilter[]
 }) {
+  const { dict } = useI18n()
+
   return (
     <Popover>
       <PopoverTrigger
         render={<Button variant="outline" className="w-full md:w-auto" />}
       >
         <BookmarkIcon data-icon="inline-start" />
-        Saved filters ({savedFilters.length})
+        {dict.pages.orders.savedFilters} ({savedFilters.length})
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 p-0">
         <div className="p-3 pb-1">
-          <PopoverTitle>Saved filters</PopoverTitle>
+          <PopoverTitle>{dict.pages.orders.savedFilters}</PopoverTitle>
         </div>
         <ScrollArea className="h-72">
           <ItemGroup className="p-1">
@@ -272,6 +280,8 @@ function MoreFiltersPopover({
   query: OrdersQuery
   push: (patch: Partial<OrdersQuery>) => void
 }) {
+  const { dict } = useI18n()
+  const items = useFilterItems()
   const extraCount =
     (query.delivery !== null ? 1 : 0) + (query.price !== "all" ? 1 : 0)
 
@@ -281,7 +291,7 @@ function MoreFiltersPopover({
         render={<Button variant="outline" className="w-full md:w-auto" />}
       >
         <Settings2Icon data-icon="inline-start" />
-        More filters
+        {dict.pages.orders.moreFilters}
         {extraCount > 0 ? (
           <Badge variant="secondary" data-icon="inline-end">
             {extraCount}
@@ -289,25 +299,25 @@ function MoreFiltersPopover({
         ) : null}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64">
-        <PopoverTitle>More filters</PopoverTitle>
+        <PopoverTitle>{dict.pages.orders.moreFilters}</PopoverTitle>
         <FieldGroup className="pt-2">
           <Field>
-            <FieldLabel>Delivery status</FieldLabel>
+            <FieldLabel>{dict.pages.orders.columns.delivery}</FieldLabel>
             <FilterSelect
-              label="Filter by delivery status"
+              label={dict.pages.orders.columns.delivery}
               className="w-full"
               value={query.delivery}
-              items={DELIVERY_ITEMS}
+              items={items.delivery}
               onPick={(delivery) => push({ delivery })}
             />
           </Field>
           <Field>
-            <FieldLabel>Price</FieldLabel>
+            <FieldLabel>{dict.pages.orders.columns.price}</FieldLabel>
             <FilterSelect
-              label="Filter by price"
+              label={dict.pages.orders.columns.price}
               className="w-full"
               value={query.price}
-              items={PRICE_ITEMS}
+              items={items.price}
               onPick={(price) => push({ price: price ?? "all" })}
             />
           </Field>
@@ -327,6 +337,8 @@ export function OrdersToolbar({
   savedFilters: SavedFilter[]
 }) {
   const router = useRouter()
+  const { dict } = useI18n()
+  const statusItems = useFilterItems().status
 
   const push = React.useCallback(
     (patch: Partial<OrdersQuery>) => {
@@ -339,10 +351,10 @@ export function OrdersToolbar({
     <>
       <DateRangeFilter query={query} push={push} />
       <FilterSelect
-        label="Filter by status"
+        label={dict.pages.orders.columns.status}
         className="w-full md:w-auto"
         value={query.status}
-        items={STATUS_ITEMS}
+        items={statusItems}
         onPick={(status) => push({ status })}
       />
       <AddressFilter query={query} cities={cities} push={push} />
@@ -372,11 +384,14 @@ export function OrdersToolbar({
             key={query.q}
             name="q"
             defaultValue={query.q}
-            placeholder="Search anything..."
-            aria-label="Search orders"
+            placeholder={dict.pages.orders.searchPlaceholder}
+            aria-label={dict.pages.orders.searchPlaceholder}
           />
           <InputGroupAddon align="inline-end">
-            <InputGroupButton type="submit" aria-label="Apply search">
+            <InputGroupButton
+              type="submit"
+              aria-label={dict.pages.orders.searchPlaceholder}
+            >
               <SlidersHorizontalIcon />
             </InputGroupButton>
           </InputGroupAddon>
@@ -392,11 +407,11 @@ export function OrdersToolbar({
       <Sheet>
         <SheetTrigger render={<Button variant="outline" className="md:hidden" />}>
           <SlidersHorizontalIcon data-icon="inline-start" />
-          Filters
+          {dict.common.filters}
         </SheetTrigger>
         <SheetContent side="bottom" className="md:hidden">
           <SheetHeader>
-            <SheetTitle>Filter orders</SheetTitle>
+            <SheetTitle>{dict.common.filters}</SheetTitle>
           </SheetHeader>
           <div className="flex flex-col gap-2 p-4">{controls}</div>
         </SheetContent>

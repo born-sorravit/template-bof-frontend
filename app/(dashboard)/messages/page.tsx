@@ -19,15 +19,17 @@ import { CardHead } from "@/components/dashboard/card-head"
 import { PageHeader } from "@/components/shell/page-header"
 import { StatTiles } from "@/components/shell/stat-tiles"
 import {
-  CHANNEL_META,
   MESSAGE_THREADS,
   relativeFromMinutes,
 } from "@/lib/data/messages"
 import { Fragment } from "react"
+import { getDictionary } from "@/lib/i18n"
 
 export const metadata: Metadata = { title: "Messages" }
 
-export default function MessagesPage() {
+export default async function MessagesPage() {
+  const { dict } = await getDictionary()
+  const t = dict.pages.messages
   const unread = MESSAGE_THREADS.reduce((sum, t) => sum + t.unread, 0)
   const waiting = MESSAGE_THREADS.filter((t) => t.unread > 0).length
 
@@ -35,17 +37,17 @@ export default function MessagesPage() {
     <>
       <FadeIn>
         <PageHeader
-          title="Messages"
-          description="Customer conversations across every channel."
+          title={t.title}
+          description={t.description}
         />
       </FadeIn>
 
       <StatTiles
         tiles={[
-          { key: "threads", label: "Open threads", value: MESSAGE_THREADS.length },
-          { key: "unread", label: "Unread messages", value: unread },
-          { key: "waiting", label: "Awaiting reply", value: waiting },
-          { key: "median", label: "Median first reply", value: 24, hint: "Minutes, last 7 days" },
+          { key: "threads", label: t.openThreads, value: MESSAGE_THREADS.length },
+          { key: "unread", label: t.unread, value: unread },
+          { key: "waiting", label: t.awaitingReply, value: waiting },
+          { key: "median", label: t.medianReply, value: 24, hint: t.medianReplyHint },
         ]}
       />
 
@@ -53,8 +55,8 @@ export default function MessagesPage() {
         <Card>
           <CardHead
             icon={MessageSquareIcon}
-            title="Inbox"
-            description="Newest activity first"
+            title={t.inbox}
+            description={t.inboxHint}
           />
           <CardContent>
             <ItemGroup>
@@ -71,7 +73,9 @@ export default function MessagesPage() {
                       <ItemTitle>
                         {thread.subject}
                         {thread.unread > 0 ? (
-                          <Badge variant="info">{thread.unread} new</Badge>
+                          <Badge variant="info">
+                            {thread.unread} {t.new}
+                          </Badge>
                         ) : null}
                       </ItemTitle>
                       <ItemDescription>
@@ -83,7 +87,7 @@ export default function MessagesPage() {
                         {relativeFromMinutes(thread.minutesAgo)}
                       </span>
                       <Badge variant="outline">
-                        {CHANNEL_META[thread.channel].label}
+                        {dict.channel[thread.channel]}
                       </Badge>
                     </ItemActions>
                   </Item>

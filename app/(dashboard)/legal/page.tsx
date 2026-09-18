@@ -18,10 +18,13 @@ import { CardHead } from "@/components/dashboard/card-head"
 import { PageHeader } from "@/components/shell/page-header"
 import { LEGAL_DOCUMENTS, LEGAL_STATE_META } from "@/lib/data/legal"
 import { formatDate } from "@/lib/orders-display"
+import { fill, getDictionary } from "@/lib/i18n"
 
 export const metadata: Metadata = { title: "Legal documents" }
 
-export default function LegalPage() {
+export default async function LegalPage() {
+  const { dict } = await getDictionary()
+  const t = dict.pages.legal
   const pendingReview = LEGAL_DOCUMENTS.filter(
     (d) => d.state === "review" || d.state === "draft"
   )
@@ -30,8 +33,8 @@ export default function LegalPage() {
     <>
       <FadeIn>
         <PageHeader
-          title="Legal documents"
-          description="Versioned policies and the share of customers who accepted each one."
+          title={t.title}
+          description={t.description}
         />
       </FadeIn>
 
@@ -40,11 +43,14 @@ export default function LegalPage() {
           <Alert>
             <ScrollTextIcon />
             <AlertTitle>
-              {pendingReview.length} documents are not live yet
+              {fill(t.notLiveTitle, { count: pendingReview.length })}
             </AlertTitle>
             <AlertDescription>
-              {pendingReview.map((d) => `${d.title} (${d.version})`).join(", ")}{" "}
-              still need sign-off before their effective date.
+              {fill(t.notLiveBody, {
+                list: pendingReview
+                  .map((d) => `${d.title} (${d.version})`)
+                  .join(", "),
+              })}
             </AlertDescription>
           </Alert>
         </FadeIn>
@@ -54,25 +60,24 @@ export default function LegalPage() {
         <Card>
           <CardHead
             icon={ScrollTextIcon}
-            title="Document register"
-            description={`${LEGAL_DOCUMENTS.length} policies tracked`}
+            title={t.register}
+            description={fill(t.registerHint, { count: LEGAL_DOCUMENTS.length })}
           />
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Document</TableHead>
-                  <TableHead className="hidden md:table-cell">Owner</TableHead>
-                  <TableHead>State</TableHead>
+                  <TableHead>{t.document}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t.owner}</TableHead>
+                  <TableHead>{t.state}</TableHead>
                   <TableHead className="hidden lg:table-cell">
-                    Effective from
+                    {t.effectiveFrom}
                   </TableHead>
-                  <TableHead className="w-44">Acceptance</TableHead>
+                  <TableHead className="w-44">{t.acceptance}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {LEGAL_DOCUMENTS.map((doc) => {
-                  const state = LEGAL_STATE_META[doc.state]
                   return (
                     <TableRow key={doc.id}>
                       <TableCell>
@@ -89,7 +94,9 @@ export default function LegalPage() {
                         {doc.owner}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={state.variant}>{state.label}</Badge>
+                        <Badge variant={LEGAL_STATE_META[doc.state].variant}>
+                          {dict.legalState[doc.state]}
+                        </Badge>
                       </TableCell>
                       <TableCell className="hidden whitespace-nowrap text-muted-foreground lg:table-cell">
                         {formatDate(`${doc.effectiveFrom}T00:00:00.000Z`)}
@@ -98,13 +105,13 @@ export default function LegalPage() {
                         {doc.acceptance > 0 ? (
                           <div className="flex flex-col gap-1">
                             <span className="text-xs text-muted-foreground tabular-nums">
-                              {doc.acceptance.toFixed(1)}% accepted
+                              {fill(t.accepted, { pct: doc.acceptance.toFixed(1) })}
                             </span>
                             <Progress value={doc.acceptance} />
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">
-                            Not collecting yet
+                            {t.notCollecting}
                           </span>
                         )}
                       </TableCell>

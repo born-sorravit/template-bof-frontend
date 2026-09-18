@@ -23,6 +23,7 @@ import { OrdersTabs } from "@/components/orders/orders-tabs"
 import { OrdersToolbar } from "@/components/orders/orders-toolbar"
 import { buildOrdersHref, CLEARED_FILTERS, hasActiveFilters } from "@/lib/orders-query"
 import type { SavedFilter } from "@/lib/data/saved-filters"
+import { useI18n } from "@/components/i18n/locale-provider"
 import type { OrdersQuery, OrdersResult } from "@/lib/types/order"
 
 /**
@@ -41,6 +42,7 @@ export function OrdersView({
   cities: string[]
   savedFilters: SavedFilter[]
 }) {
+  const { dict } = useI18n()
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set())
 
   const toggleRow = React.useCallback((id: string, checked: boolean) => {
@@ -98,10 +100,9 @@ export function OrdersView({
                 <EmptyMedia variant="icon">
                   <SearchXIcon />
                 </EmptyMedia>
-                <EmptyTitle>No orders match these filters</EmptyTitle>
+                <EmptyTitle>{dict.pages.orders.emptyTitle}</EmptyTitle>
                 <EmptyDescription>
-                  Try a different search term, or clear the filters to see all 88
-                  orders.
+                  {dict.pages.orders.emptyBody}
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
@@ -115,7 +116,7 @@ export function OrdersView({
                   }
                   nativeButton={false}
                 >
-                  Clear filters
+                  {dict.common.clearFilters}
                 </Button>
               </EmptyContent>
             </Empty>

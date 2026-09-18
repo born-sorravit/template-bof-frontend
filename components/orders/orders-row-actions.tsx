@@ -20,9 +20,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/toast"
+import { useI18n } from "@/components/i18n/locale-provider"
 import type { Order } from "@/lib/types/order"
 
 export function OrdersRowActions({ order }: { order: Order }) {
+  const { dict } = useI18n()
+
   return (
     <div className="flex items-center justify-end gap-1.5">
       <Button
@@ -31,7 +34,7 @@ export function OrdersRowActions({ order }: { order: Order }) {
         render={<Link href={`/orders/${order.id}`} />}
         nativeButton={false}
       >
-        Manage
+        {dict.common.manage}
       </Button>
 
       <DropdownMenu>
@@ -39,7 +42,7 @@ export function OrdersRowActions({ order }: { order: Order }) {
           render={<Button variant="outline" size="sm" />}
           aria-label={`Actions for order ${order.id}`}
         >
-          <span className="hidden sm:inline">Actions</span>
+          <span className="hidden sm:inline">{dict.common.actions}</span>
           <EllipsisVerticalIcon data-icon="inline-end" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -47,7 +50,7 @@ export function OrdersRowActions({ order }: { order: Order }) {
             <DropdownMenuItem
               onClick={() => {
                 void navigator.clipboard?.writeText(order.id)
-                toast.add({ title: `Copied order ${order.id}` })
+                toast.add({ title: order.id, description: dict.common.mockAction })
               }}
             >
               <CopyIcon />
@@ -59,14 +62,19 @@ export function OrdersRowActions({ order }: { order: Order }) {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
-                toast.add({ title: `Tracking requested for ${order.id}` })
+                toast.add({ title: order.id, description: dict.common.mockAction })
               }
             >
               <TruckIcon />
               Track shipment
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => toast.add({ title: "Sent to printer" })}
+              onClick={() =>
+                toast.add({
+                  title: dict.common.print,
+                  description: dict.common.mockAction,
+                })
+              }
             >
               <PrinterIcon />
               Print packing slip
@@ -78,8 +86,8 @@ export function OrdersRowActions({ order }: { order: Order }) {
               variant="destructive"
               onClick={() =>
                 toast.add({
-                  title: `Order ${order.id} cancelled`,
-                  description: "This is a mock action — no data changed.",
+                  title: order.id,
+                  description: dict.common.mockAction,
                 })
               }
             >
